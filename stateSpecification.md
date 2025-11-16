@@ -1,7 +1,10 @@
 # State Specification
 
 ## Description of State Space
-The state space of Ticket to Ride consists of the board state, the cards in players' hands, and the current face-up train cards.
+  In Ticket to Ride, a game state captures information about every player’s cards and trains, and the board itself. The board has vertices and edges, represented as city destinations and train routes, respectively. Every train route has two destinations it connects, the color and player association of the route, and the length of the route. The state also contains information about each player’s possessions. At any time in the game, a player can have trains of varying colors to place on the board and different destination tickets. 
+	The state space of Ticket to Ride is the set of all possible states. In other words, it is the set of all possible information combinations about the board and player-specific information. With over 140 cards and 30 destination vertices, it is evident that this state space cannot be searched using a simple breadth-first search or A* search. We can also express the state space in mathematical notation.
+
+As mentioned above, the state space of Ticket to Ride consists of the board state, the cards in players' hands, and the current face-up train cards.
 
 ### Players
 $P = \{ P_1, P_2, \ldots, P_k \}$
@@ -14,7 +17,7 @@ $C = \{ C_{ny}, C_{la}, C_{ph}, \ldots, C_{j} \}$
 
 ### Edges
 Edges are unordered pairs of distinct cities:
-$$E = \{ (C_i, C_j) \mid C_i, C_j \in C,\ i \neq j \}$
+$E = \{ (C_i, C_j) \mid C_i, C_j \in C,\ i \neq j \}$
 
 Each edge $e \in E$ is defined by the functions:
 
