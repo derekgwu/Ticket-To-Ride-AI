@@ -1,5 +1,7 @@
 import networkx as nx
-import pylab
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 class Board(object):
     def __init__(self):
@@ -342,10 +344,10 @@ class Board(object):
         pos=nx.spring_layout(board)
         nx.draw(board, pos)
         nx.draw_networkx_edge_labels(board, pos)
-        pylab.ion()
-        pylab.show()
-        pylab.pause(pauseTime)
-        pylab.close()
+        plt.ion()
+        plt.show()
+        plt.pause(pauseTime)
+        plt.close()
     
     def hasEdge(self, city1, city2):
         """returns True an edge exists between city1, city2.  False otherwise
@@ -427,7 +429,7 @@ class Board(object):
     
     def iterEdges(self):
         """returns an interator over all edges and edge data"""
-        return self.G.edges_iter(data = True)
+        return self.G.edges(data = True)
         
 class PlayerBoard(Board):
     """Creates a custom graph for each player to represent their progress"""

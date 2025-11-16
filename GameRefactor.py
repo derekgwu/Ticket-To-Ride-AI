@@ -31,10 +31,10 @@ class Game(object):
     def get_num_of_players(self):
         while True:
             try:
-                self.numPlayers = int(raw_input("Enter number of players: "))
+                self.numPlayers = int(input("Enter number of players: "))
                 assert 1 <= self.numPlayers <= 6
             except (ValueError, AssertionError):
-                print "Invalid response. Please enter '1', '2', '3', '4', '5' or '6'"
+                print("Invalid response. Please enter '1', '2', '3', '4', '5' or '6'")
                 continue
             break
 
@@ -50,7 +50,7 @@ class Game(object):
 
     def print_cards(self, cards):
         for i, card in enumerate(cards):
-            print "{}: {}".format(i, card)
+            print ("{}: {}".format(i, card))
 
     def narrow_down_starting_tickets(self, player):
         possible_tickets_to_choose_from = self.deck.dealTickets(self.numTicketsDealt)
@@ -58,7 +58,7 @@ class Game(object):
             choices = []
             self.print_cards(possible_tickets_to_choose_from)
             try:
-                chosen_cards = raw_input("Enter numbers corresponding to the cards you'd like to keep: (Ex: 0 1 (or) 0 1 2) ")
+                chosen_cards = input("Enter numbers corresponding to the cards you'd like to keep: (Ex: 0 1 (or) 0 1 2) ")
                 chosen_cards = chosen_cards.split(' ')
                 assert len(chosen_cards) >= self.minTicketsToKeepAtStart
                 for i in chosen_cards:
@@ -73,14 +73,14 @@ class Game(object):
                     else:
                         self.deck.addToTicketDiscard(ticket)
             except (ValueError, AssertionError):
-                print "\nInvalid response.  Numbers must be separated by one space and you must choose at least {} cards.".format(self.minTicketsToKeepAtStart)
+                print("\nInvalid response.  Numbers must be separated by one space and you must choose at least {} cards.".format(self.minTicketsToKeepAtStart))
                 continue
             break
-        print player.tickets
+        print(player.tickets)
 
     def narrow_down_starting_tickets_for_all_players(self):
         for player in self.players:
-            print "\nPlayer {}, it's your turn to select destination tickets! \n".format(player.playerPosition)
+            print("\nPlayer {}, it's your turn to select destination tickets! \n".format(player.playerPosition))
             self.narrow_down_starting_tickets(player)
 
     def initialize_game(self):
