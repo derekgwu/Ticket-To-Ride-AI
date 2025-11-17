@@ -67,6 +67,14 @@ $\text{ACTIONS(turn)} = \{ \text{drawCard}, \text{placeTrain(e)}, \text{drawDest
 
 $\text{drawCard}$ will allow the player, $P_i$, to add two train cards to their hand. This action only affects $P_i$'s hand. Given an edge $e \in E$, $\text{placeTrain(e)}$ allows a player $P_i$ to place their trains on an edge and claim a route. This action affects $P_i$'s hand and the board's state. $\text{drawDestinationTicket}$ allows the player, $P_i$, to add an additional destination ticket to their hand. This action affects $P_i$'s hand only.
 
+## State Transitions
+
+The transition model is:
+
+$$T(s' \mid s, a)$$
+
+This model shows the probability of moving from state \(s\) to state \(s'\) after taking action \(a\). There are 3 real distinct actions a player can take on any hand: Draw a train card, Claim a route, or Draw a set of destination tickets.
+
 ### 1. Draw Train Card
 
 There are two cases:
@@ -91,7 +99,9 @@ Claiming a track \(e\) will produce one state since the player is explicitly cho
 
 $$T(s' \mid s, \text{placeTrain}(e)) = 1$$
 
-Then the colored cards used are removed from the players hand, the remaining train pieces are removed from the players hand and the overall score is updated.
+Then the colored cards used are removed from the players hand, $P_{i_T}$. The remaining train pieces are removed from the players hand, $P_{i_{TR}}$, and the overall score is updated.
+
+$e$ is then updated in $B$ with a new color, $c(e)$, representing the color the player chose to color the route.  
 
 
 ### 3. Draw Destination Tickets (Stochastic)
@@ -126,10 +136,3 @@ The observable state for a player $P_k$ is defined by:
 $$o_i = \big( B,\ F_{\text{train}},\ H_k,\ T_k,\ R_k,\ P_k)$$
 
 
-## State Transitions
-
-The transition model is:
-
-$$T(s' \mid s, a)$$
-
-This model shows the probability of moving from state \(s\) to state \(s'\) after taking action \(a\). There are 3 real distinct actions a player can take on any hand: Draw a train card, Claim a route, or Draw a set of destination tickets.
