@@ -125,6 +125,7 @@ The players do not observe the full state as some aspects are hidden from the pl
 - Their hand of cards
 - Their destination tickets
 - Their remaining trains
+- Cards previously taken from the face up trains cards by other players and when the the train deck is to be reshuffled.
 
 They cannot however see:
 - Other players train cards
