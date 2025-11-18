@@ -1,4 +1,6 @@
 import collections
+from itertools import combinations
+from collections import Counter
 
 class Player(object):
     
@@ -91,6 +93,34 @@ class Player(object):
         return self.name
         
 
-        
+    # Get colors
+    def getCombinations(self,weight, color):
+        possibleCombinations = []
+        wilds = self.hand.get("wild") 
+
+        if weight is None:
+            return
+        # print(wilds)
+        if color == 'grey':
+            #can use any combination of all 9 colors (8 colors + wild)
+            elements = list(self.hand.elements())
+            for combo in combinations(elements, weight):
+                combo_dict = dict(Counter(combo))
+                possibleCombinations.append(combo_dict)
+        else:
+            colorCount = self.hand.get(color)
+
+            if colorCount >= weight:
+                possibleCombinations.append({color:weight})
+
+
+            for x in range(min(colorCount, weight) + 1):
+                for y in range(min(wilds, weight - x) + 1):
+                    possibleCombinations.append({color:x, "wild":y})
+                
+        return possibleCombinations
+
+
+    
         
         

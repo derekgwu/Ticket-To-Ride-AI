@@ -394,6 +394,25 @@ class Board(object):
         """
         return self.G.get_edge_data(city1, city2)['edgeColors']
 
+
+    def getEdgesData(self):
+        """return a list of dictionaries
+        "edge" = (city1,city2)
+        "weight" = int
+        "edgeColors" = ['color1', 'color2']
+        """
+        edges = []
+        
+        for edge in self.getEdges():
+            result = {}
+            result["edge"] = edge
+            city1,city2 = edge
+            result["weight"] = self.getEdgeWeight(city1, city2)
+            result["edgeColors"] = self.getEdgeColors(city1, city2)
+            edges.append(result)
+        
+        return edges
+
     def getEdgeWeight(self, city1, city2):
         """returns the weight of the edge (i.e. the distance between two cities)
         city1, city2: string
