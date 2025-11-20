@@ -47,6 +47,41 @@ class Game(object):
                                                 )                          
             self.players.append(player)
     
+
+
+    #ADDITION
+    def getLegalActions(self, player):
+        moves = []
+
+        if self.checkEndingCondition(player):
+            return
+        
+        # A train move is appended as 
+        # moves.append({
+        #                 "move": type,
+        #                 "edge": edge -> dictionary with edge: (city1,city2), weight: int, edgeColors: ["c1", "c2"]
+        #                 "color": color, # including this because an ed
+        #                 "possible_cards": possibleCombinations -> List of Counters {red:1, blue: 1, etc}
+        #             }) 
+
+        #generates all possible moves that can be played (currently a single move actually holds lots of move (different combos of cars))
+        for edge in self.board.getEdgesData():
+            city1, city2 = edge["edge"]
+            for color in edge["edgeColors"]:
+                if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
+                    # so the options are any amount of the color and greys
+                    # if route is grey: any combination of 2 cards
+                    possibleCombinations = player.getCombinations(edge['weight'], color)
+
+                    moves.append({
+                        "move": "train",
+                        "edge": edge,
+                        "color": color,
+                        "possible_cards": possibleCombinations
+                    })
+        # pick up destination cards
+        
+        return moves
     
     def printSepLine(self, toPrint):
         
@@ -63,7 +98,7 @@ class Game(object):
         for color, count in toPrint.items():
             print(f"{color}: {count}")
 
-    def printLine():
+    def printLine(self):
         print("--------------------")
             
     def advanceOnePlayer(self):
@@ -88,7 +123,23 @@ class Game(object):
                 routeDist = self.board.getEdgeWeight(city1, city2)
                 if player.hand[col] + player.hand['wild'] >= routeDist:
                     return True
-        return False      
+        return False    
+
+
+    # checks if a player can use an edge and return the color or None
+    def doesPlayerHaveCardsForEdgeColCheck(self, player, city1, city2, color ):
+        if player.playerBoard.hasEdge(city1, city2):
+            return False
+        routeDist = self.board.getEdgeWeight(city1, city2)
+        if color == 'grey':
+            if max([x for x in player.hand.values() if x != 'wild']) \
+            + player.hand['wild'] >= routeDist:
+                return True
+        else:
+            routeDist = self.board.getEdgeWeight(city1, city2)
+            if player.hand[color] + player.hand['wild'] >= routeDist:
+                return True
+        return False  
     
     def checkEndingCondition(self, player):
         return player.getNumTrains() < self.endingTrainCount
@@ -163,9 +214,15 @@ class Game(object):
         """player chooses 'cards', 'trains', 'tickets'
         player: player object
         """
-        
+        print ("------------------------------")
+        print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
+        print(self.getLegalActions(player))
+        print ("------------------------------")
         choice = input("Please type: cards, trains or tickets: ")
+        
     
+
+
         count = 0 # a way out of the loop if 5 invalid responses
         while choice not in ['cards', 'trains', 'tickets'] and count < 5:
             choice = input("Invalid repsonse. Please select either cards, "

@@ -1,5 +1,8 @@
 
 #All values and methods associated with the Original Ticket to Ride board game
+#DO NOT USE - CONTAINS MOdified version of TTRGameSIM that isn't used
+
+
 import TTRBoard
 import TTRCards
 import TTRPlayer
@@ -43,6 +46,33 @@ class Game(object):
                                                 )                          
             self.players.append(player)
 
+
+
+    def getLegalActions(self, playerNumber):
+
+        # what are the legal actions
+        # pick up the cards (possible combinations of cards)
+        # options
+        # (wild) , ()
+        moves = set()
+
+        if self.checkEndingCondition():
+            return
+        
+        # place the train based on cards in hang
+
+        for edge in self.board.getEdgesData():
+            city1, city2 = edge["edge"]
+            for color in edge["edgeColors"]:
+                if self.doesPlayerHaveCardsForEdgeColCheck(playerNumber, city1, city2, color):
+                    moves.add({
+                        "move": "train",
+                        "edge": edge,
+                        "color": color
+                    })
+        # pick up destination cards
+        
+        return moves
         
     def getPlayer(self, playerNumber):
         return self.players[playerNumber]
@@ -80,6 +110,21 @@ class Game(object):
                 if player.hand[col] + player.hand['wild'] >= routeDist:
                     return True
         return False      
+    
+    # checks if a player can use an edge and return the color or None
+    def doesPlayerHaveCardsForEdgeColCheck(self, player, city1, city2, color ):
+        if player.playerBoard.hasEdge(city1, city2):
+            return False
+        routeDist = self.board.getEdgeWeight(city1, city2)
+        if color == 'grey':
+            if max([x for x in player.hand.values() if x != 'wild']) \
+            + player.hand['wild'] >= routeDist:
+                return True
+        else:
+            routeDist = self.board.getEdgeWeight(city1, city2)
+            if player.hand[color] + player.hand['wild'] >= routeDist:
+                return True
+        return False     
     
     def checkEndingCondition(self, player):
         return player.getNumTrains() < self.endingTrainCount
