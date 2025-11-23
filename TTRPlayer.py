@@ -9,7 +9,8 @@ class Player(object):
                  startingTickets, 
                  playerBoard, 
                  playerPosition, 
-                 numTrains
+                 numTrains,
+                 ai
                  ):
         """orderNumber: int
         startingHand: list
@@ -29,6 +30,7 @@ class Player(object):
         
         #custom board to represent
         self.playerBoard    = playerBoard
+        self.ai             = ai
                     
     def removeCardsFromHand(self, color, numColor):
         """removes one ore more cards from hand
@@ -91,6 +93,9 @@ class Player(object):
     
     def getName(self):
         return self.name
+    
+    def isAi(self):
+        return self.ai
         
 
     # Get colors
@@ -109,7 +114,9 @@ class Player(object):
                 possibleCombinations.append(combo_dict)
         else:
             colorCount = self.hand.get(color)
-
+            
+            if colorCount == None:
+                colorCount = 0
             if colorCount >= weight:
                 possibleCombinations.append({color:weight})
 

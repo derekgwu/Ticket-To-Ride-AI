@@ -10,7 +10,7 @@ import collections
 import pprint
 
 class Game(object):
-    def __init__(self, numPlayers):
+    def __init__(self, numPlayers, numAi):
         
         self.sizeDrawPile          = 5
         self.numTicketsDealt       = 3
@@ -25,6 +25,7 @@ class Game(object):
         
         self.board                 = TTRBoard.Board()
         self.numPlayers            = numPlayers
+        self.numAi                 = numAi
         self.players               = []
         
         self.posToMove             = 0
@@ -43,9 +44,27 @@ class Game(object):
                                                 startingTickets, 
                                                 playerBoard, 
                                                 position, 
-                                                self.startingNumOfTrains
+                                                self.startingNumOfTrains,
+                                                False
                                                 )                          
             self.players.append(player)
+
+        for position in range(numAi):
+            startingHand     = self.deck.dealCards(self.sizeStartingHand)
+            startingTickets  = [] #self.deck.dealTickets(self.numTicketsDealt)
+                                  #this is now done in initialize method below
+                                  #occurs before first player's first move
+            playerBoard      = TTRBoard.PlayerBoard()
+
+            player           = TTRPlayer.Player(startingHand, 
+                                                startingTickets, 
+                                                playerBoard, 
+                                                position, 
+                                                self.startingNumOfTrains,
+                                                True
+                                                )                          
+            self.players.append(player)
+        
     
 
 
@@ -80,11 +99,35 @@ class Game(object):
                         "possible_cards": possibleCombinations
                     })
         # pick up destination cards
+
+        #pick up train cards
+        for card in self.deck.getDrawPile():
+            moves.append({
+                "move": "card",
+                "card": card,
+            })
         
+        #can also draw from the facedown pile
+        moves.append({
+                "move": "card",
+                "card": "facedown",
+        })
+
+        #pick up more destination cards
+        tickets = self.deck.dealTickets(self.numTicketsDealt)
+        for ticket in tickets:
+            moves.append({
+                "move": "ticket",
+                "ticket": ticket,
+            })
+
+
+        
+
+
         return moves
     
     def printSepLine(self, toPrint):
-        
         print(toPrint)
     
     def formatTrainPrint(self, toPrint):
@@ -98,15 +141,27 @@ class Game(object):
         for color, count in toPrint.items():
             print(f"{color}: {count}")
 
+    def formatTicketPrint(self, toPrint):
+        i = 0
+        for ticket in toPrint:
+            print(i)
+            print(f"Arrival: {toPrint[ticket][0]}")
+            print(f"Destination: {toPrint[ticket][1]}")
+            print(f"Length: {toPrint[ticket][2]}")
+            print("")
+            i += 1
+
     def printLine(self):
         print("--------------------")
             
     def advanceOnePlayer(self):
         """Updates self.posToMove"""
         self.posToMove += 1
-        self.posToMove %= self.numPlayers
+        self.posToMove %= self.numPlayers + self.numAi
+        print(self.posToMove)
     
     def getCurrentPlayer(self):
+        print(self.players[self.posToMove])
         return self.players[self.posToMove]
     
     def doesPlayerHaveCardsForEdge(self, player, city1, city2):
@@ -214,10 +269,10 @@ class Game(object):
         """player chooses 'cards', 'trains', 'tickets'
         player: player object
         """
-        print ("------------------------------")
-        print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
-        print(self.getLegalActions(player))
-        print ("------------------------------")
+        #print ("------------------------------")
+        #print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
+        #print(self.getLegalActions(player))
+        #print ("------------------------------")
         choice = input("Please type: cards, trains or tickets: ")
         
     
@@ -500,7 +555,7 @@ class Game(object):
         tickets = {x[0]:x[1] for x in zip(range(len(tickets)), tickets)}
         print("Please select at least " + str(minNumToSelect) + ": ")
         
-        self.printSepLine(tickets)
+        self.formatTicketPrint(tickets)
         
         choices = set()
         choice = input("Select a number corresponding to the above tickets,"
@@ -549,7 +604,7 @@ def playTTR():
     
     
     numPlayers = input("How many players will be playing today? "
-                            + "1,2,3,4,5 or 6? ")
+                            + "1,2,3,4,5 or 6?")
 
     count = 0
     while int(numPlayers) not in range(1,7) and count < 5:
@@ -559,19 +614,28 @@ def playTTR():
     if count >= 5:
         print("Default player count has been set to 2")
         numPlayers = 2
+    
+    aiCount = input("How many players are AI?")
+    while int(aiCount) not in range(0,int(numPlayers))  and count < 5:
+        if aiCount == 'exit': return "Thanks for playing!"
+        numPlayers = input(f"Please enter a number between 0 and {numPlayers}: ")
+        count += 1
         
-    game = Game(int(numPlayers))    
+    game = Game(int(numPlayers) - int(aiCount), int(aiCount))    
     
     game.initialize()
     
     
     
-    player = game.players[game.posToMove]
+    player = game.players[0]
 
     #main game loop
     while True:
-        print("\n_________________NEW PLAYER'S TURN_________________ \n")
-        print("It's your turn " + str(player.getName()) + "! ")
+        if player.isAi() == False:
+            print("\n_________________NEW PLAYER'S TURN_________________ \n")
+        else:
+            print("\n_________________AI'S TURN_________________ \n")
+
         game.playTurn(player)
         
         #condition to break out of loop
@@ -579,6 +643,7 @@ def playTTR():
             game.advanceOnePlayer()
             player = game.getCurrentPlayer()
             break
+    
         game.advanceOnePlayer()
         player = game.getCurrentPlayer()
     
