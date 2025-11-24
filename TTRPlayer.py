@@ -43,8 +43,10 @@ class Player(object):
         assumes all cards are in hand, error if not
         cards: list
         """
-        assert self.hand[color] >= numColor
-        self.hand[color] -= numColor
+        if self.hand[color] >= numColor:
+            self.hand[color] -= numColor
+        else:
+            self.hand[color] = 0
         
     #add card to hand
     def addCardToHand(self, card):

@@ -128,8 +128,13 @@ class Game(object):
 
             
     def getObservations(self, player):
+        observations = []
         #get the player's hand
         hand = player.getHand()
+
+        for card in hand:
+            observations.append()
+
 
         #get the face up cards
         draw_pile = self.deck.getDrawPile()
@@ -405,6 +410,7 @@ class Game(object):
         TTRPrint.printLine()
         #only print routes that are legal given the players cards
         #sort alphabetically
+        playable_routes = [x for x in sorted(self.board.iterEdges()) if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])]
         TTRPrint.formatTrainPrint([x for x in sorted(self.board.iterEdges()) 
                         if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])])
         TTRPrint.printLine()
@@ -419,7 +425,10 @@ class Game(object):
                 city1 = input("Invalid response.Please select from the above city list:")
                 count += 1
         else:
-            city1 = random.choices(list(self.board.getCities()), k=1)[0]
+            playable_choices = []
+            for route in playable_routes:
+                playable_choices.append(route[0])
+            city1 = random.choices(playable_choices, k=1)[0]
             print(f"AI selected start city: {city1}")
         if count >= 5:
             return "Move complete"
@@ -482,6 +491,7 @@ class Game(object):
                     print ("Invalid Color")
                     return "Move complete"
             else:
+               
                 color = random.choices(spanColors, k=1)[0]
                 print(f"AI selected track color: {color}")
                 
@@ -506,7 +516,8 @@ class Game(object):
                 numColor = input(f"How many {color} cards would you like to play? ({availColor}) available ")
                                  
             else:
-                color = random.choices(self.deck.possibleColors, k=1)[0]
+                possible_colors = list(player.getHand().keys())
+                color = random.choices(possible_colors, k=1)[0]
                 availColor = player.hand[color]
                 numColor = random.randrange(0,availColor + 1)
                 print(f"AI selected color {numColor} {color} cards")
