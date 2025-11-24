@@ -1,13 +1,22 @@
 from tabulate import tabulate
 def formatTrainPrint(toPrint):
+        display = []
         for item in toPrint:
-            print(f"| {item[0]} to {item[1]} | Trains required: {item[2]['weight']}")
-            print(f"Colors: {item[2]['edgeColors']}")
-            print()
+            colors = ""
+            if len(item[2]['edgeColors']) > 1:
+                colors = f"{item[2]['edgeColors'][0]} and {item[2]['edgeColors'][1]}"
+            else:
+                colors = item[2]['edgeColors'][0]
+            info = [item[0], item[1], item[2]['weight'], colors]
+            display.append(info)
+        print(tabulate(display, headers=['From', 'To', 'Length', 'Color(s)']))
+        
 
 def formatHandPrint(toPrint):
+    info = []
     for color, count in toPrint.items():
-        print(f"{color}: {count}")
+        info.append([color, count])
+    print(tabulate(info, headers=['Color', 'Count']))
 
 def formatTicketPrint(toPrint):
     i = 0
@@ -15,6 +24,12 @@ def formatTicketPrint(toPrint):
         print(f"ID: {i} | {toPrint[ticket][0]} to {toPrint[ticket][1]} | Length: {toPrint[ticket][2]}")
         print("")
         i += 1
+
+def formatTicketHandPrint(toPrint):
+    display = []
+    for ticket in toPrint:
+        display.append([ticket[0], ticket[1], ticket[2], toPrint[ticket]])
+    print(tabulate(display, headers=['From', 'To', 'Length', 'Completed']))
 
 def printLine():
     print("--------------------")
@@ -29,3 +44,9 @@ def formatPrintHand(hand):
 def formatPrintDeck(deck):
     print(" | ".join(map(str, deck)))
     print()
+
+def formatPrintOtherPostGameData(info):
+    print(tabulate(info, headers=['Number of Trains Left', 'Points']))
+
+
+

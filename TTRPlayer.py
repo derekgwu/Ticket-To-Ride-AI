@@ -18,7 +18,13 @@ class Player(object):
         playerBoard: PlayerBoard object from the TTRBoard module
         playerPosition: int
         """
-        self.name           = '' #ask for them to enter it on first turn
+        name = ""
+        if not ai:
+            name = input("Enter player name: ")
+        else:
+            import random
+            name = f"AI_Player_{random.randint(1000,9999)}"
+        self.name           = name #ask for them to enter it on first turn
         
         #implimented as a collection to avoid O(n) hand.remove(x)
         self.hand           = collections.Counter(startingHand)
@@ -82,8 +88,10 @@ class Player(object):
         return self.numTrains
     
     def playNumTrains(self, numTrains):
-        assert numTrains <= self.numTrains
-        self.numTrains -= numTrains
+        if(numTrains <= self.numTrains):
+            self.numTrains -= numTrains
+        else:
+            self.numTrains = 0
         
     def setPlayerName(self, name):
         """sets playerName to name
