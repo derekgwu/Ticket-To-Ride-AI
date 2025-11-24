@@ -8,6 +8,10 @@ import TTRCards
 import TTRPlayer
 import collections
 import pprint
+import random
+
+
+import TTRPrint
 
 class Game(object):
     def __init__(self, numPlayers, numAi):
@@ -130,35 +134,12 @@ class Game(object):
     def printSepLine(self, toPrint):
         print(toPrint)
     
-    def formatTrainPrint(self, toPrint):
-        for item in toPrint:
-            print(f"{item[0]} to {item[1]}")
-            print(f"Trains required: {item[2]['weight']}")
-            print(f"Colors: {item[2]['edgeColors']}")
-            print()
-
-    def formatHandPrint(self, toPrint):
-        for color, count in toPrint.items():
-            print(f"{color}: {count}")
-
-    def formatTicketPrint(self, toPrint):
-        i = 0
-        for ticket in toPrint:
-            print(i)
-            print(f"Arrival: {toPrint[ticket][0]}")
-            print(f"Destination: {toPrint[ticket][1]}")
-            print(f"Length: {toPrint[ticket][2]}")
-            print("")
-            i += 1
-
-    def printLine(self):
-        print("--------------------")
+    
             
     def advanceOnePlayer(self):
         """Updates self.posToMove"""
         self.posToMove += 1
         self.posToMove %= self.numPlayers + self.numAi
-        print(self.posToMove)
     
     def getCurrentPlayer(self):
         print(self.players[self.posToMove])
@@ -206,7 +187,6 @@ class Game(object):
         for player in self.players:
                 
             #pick desination tickets
-            
             self.pickTickets(player, 2)
             
             self.advanceOnePlayer()
@@ -274,24 +254,20 @@ class Game(object):
         #print(self.getLegalActions(player))
         #print ("------------------------------")
         choice = input("Please type: cards, trains or tickets: ")
-        
-    
-
-
         count = 0 # a way out of the loop if 5 invalid responses
         while choice not in ['cards', 'trains', 'tickets'] and count < 5:
             choice = input("Invalid repsonse. Please select either cards, "
                                + "trains or tickets: ")
             count += 1
 
-        #displayMap = input("Display map? y/n: ")
-        #if displayMap == 'y':
-        #    pauseTime = input("For how many seconds? (between 1 and 30): ")
-        #    if int(pauseTime) not in range(1, 31):
-        #        pass
-        #    else:
-        #        self.board.showBoard(self.board.G, int(pauseTime))
-        #        #Depricated?
+        displayMap = input("Display map? y/n: ")
+        if displayMap == 'y':
+            pauseTime = input("For how many seconds? (between 1 and 30): ")
+            if int(pauseTime) not in range(1, 31):
+                pass
+            else:
+                self.board.showBoard(self.board.G, int(pauseTime))
+                #Depricated? I don't think so
 
         if count >= 5:
             return "Move complete"
@@ -306,25 +282,41 @@ class Game(object):
         else:
             self.pickTickets(player)
             return "Move complete"
+        
     
     def pickCards(self, player):
         count = 0 # a way out of the loop if 5 invalid responses
         print("Your hand consists of: ")
-        self.printSepLine(player.getHand())
-        
-        print("Draw pile consists of: ")
-        self.printSepLine(self.deck.getDrawPile())
-        
-        choice1 = input("Please type a card from the above list or "
-                            + "type 'drawPile': ")
-        while choice1 not in self.deck.getDrawPile() + ['drawPile'] \
-               and count < 5:
+        TTRPrint.formatPrintHand(player.getHand())
 
-            choice1 = input("Invalid repsonse. Please type either from " 
-                                + str(self.deck.getDrawPile()) 
-                                + " or type 'drawPile' "
-                                )
-            count += 1
+        print("Draw pile consists of: ")
+        TTRPrint.formatPrintDeck(self.deck.getDrawPile())
+
+        choice1 = ''
+
+        #if player is not AI
+        if player.isAi() == False:
+            choice1 = input("Please type a card from the above list or "
+                                + "type 'drawPile': ")
+            while choice1 not in self.deck.getDrawPile() + ['drawPile'] \
+                   and count < 5:
+
+                choice1 = input("Invalid repsonse. Please type either from " 
+                                    + str(self.deck.getDrawPile()) 
+                                    + " or type 'drawPile' "
+                                    )
+                count += 1
+        
+        #otherwise it's AI
+        else:
+            print("AI chooses draw cards")
+            choices = self.deck.getDrawPile()
+            choices.append('drawPile')
+            choice1 = random.choices(choices + ['drawPile'], k=1)[0]
+            if choice1 == 'drawPile':
+                print("AI selected: drawPile")
+            else:
+                print(f"AI selected: {choice1}")
         
         #add card to player's hand
         #remove it from drawPile or cards and 
@@ -333,34 +325,40 @@ class Game(object):
             pass
         elif choice1 == 'drawPile':
             chosenCard = self.deck.pickFaceDown()
-            print("You selected: " + str(chosenCard))
+            print(f"{str(chosenCard)} was selected from the pile")
             player.addCardToHand(chosenCard)
         else:
             player.addCardToHand(self.deck.pickFaceUpCard(choice1))
         
         #start second card selection
         if choice1 == 'wild':
-            print("Your hand now consists of: ")
-            self.printSepLine(player.getHand()) 
- 
+            print("Hand now consists of: ")
+            TTRPrint.formatPrintHand(player.getHand())
             return "Move complete"
 
         count = 0
         
-        self.printSepLine(self.deck.getDrawPile())
-         
-        choice2 = input("Please type another card from the above list or "
-                            + "type 'drawPile': ")
-        while choice2 == 'wild'  \
-               or (choice2 not in self.deck.getDrawPile() + ['drawPile'] \
-               and count < 5):
-            
-            choice2 = input("Invalid repsonse. Please type either from " 
-                                + str(self.deck.getDrawPile()) 
-                                + " or type 'drawPile' \
-                                NOTE: second choice cannot be 'wild' "
-                                )
-            count += 1
+        TTRPrint.formatPrintDeck(self.deck.getDrawPile())
+        choice2 = ''
+        if player.isAi() == False:
+            choice2 = input("Please type another card from the above list or type 'drawPile': ")
+            while (choice2 == 'wild' or
+                   (choice2 not in self.deck.getDrawPile() + ['drawPile'] and
+                   count < 5)):
+
+                choice2 = input(f"Invalid repsonse. Please type either from {self.deck.getDrawPile()} or type 'drawPile' NOTE: second choice cannot be 'wild' ")
+                count += 1
+        else:
+            choice = self.deck.getDrawPile()
+            choices.append('drawPile')
+            while 'wild' in choice:
+                choice.remove('wild')
+
+            choice2 = random.choices(choice, k=1)[0]
+            if choice2 == 'drawPile':
+                print("AI selected: drawPile")
+            else:
+                print(f"AI selected: {choice2}")
             
         #add card to player's hand
         #remove it from drawPile or cards and 
@@ -369,98 +367,100 @@ class Game(object):
             return "Move complete"
         elif choice2 == 'drawPile':
             chosenCard = self.deck.pickFaceDown()
-            print("You selected: " + str(chosenCard))
+            print(f"{str(chosenCard)} chosen from the pile")
             player.addCardToHand(chosenCard)
         else:
             player.addCardToHand(self.deck.pickFaceUpCard(choice2))
         
-        print("Your hand now consists of: ")
-        self.printSepLine(player.getHand())  
+        print("Hand now consists of: ")
+        TTRPrint.formatPrintHand(player.getHand())
+        
         return "Move complete"
     
     def placeTrains(self, player):
         count = 0
         print("Available cities:")
-        print("--------------------")
+        TTRPrint.printLine()
         #only print routes that are legal given the players cards
         #sort alphabetically
-        self.formatTrainPrint([x for x in sorted(self.board.iterEdges()) 
+        TTRPrint.formatTrainPrint([x for x in sorted(self.board.iterEdges()) 
                         if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])])
-        self.printLine()
+        TTRPrint.printLine()
         print("Your hand consists of: ")
-        self.printLine()
-        self.formatHandPrint(player.getHand())
-        self.printLine()
-        
-        city1 = input("Please type the start city of desired route: ")
-        
-        while city1 not in self.board.getCities() and count < 5:
-            city1 = input("Invalid response.  "
-                              + "Please select from the above city list: "
-                             )
-            count += 1
-        
+        TTRPrint.printLine()
+        TTRPrint.formatHandPrint(player.getHand())
+        TTRPrint.printLine()
+        city1 = ''
+        if player.isAi() == False:
+            city1 = input("Please type the start city of desired route: ")
+            while city1 not in self.board.getCities() and count < 5:
+                city1 = input("Invalid response.Please select from the above city list:")
+                count += 1
+        else:
+            city1 = random.choices(list(self.board.getCities()), k=1)[0]
+            print(f"AI selected start city: {city1}")
         if count >= 5:
             return "Move complete"
             
         if len([x for x in self.board.G.neighbors(city1) 
                 if self.board.hasEdge(city1, x)]) == 0:
-
-            print("You have a selected a city with no legal destination")
+            print("Selected a city with no legal destination")
             return "Move complete"
         
         #start city2
         count = 0
-        
-        print("Available destination cities: " \
-        + str([x for x in self.board.G.neighbors(city1) 
-              if self.doesPlayerHaveCardsForEdge(player, city1, x)]))
-        
-        city2 = input("Please type the destination city to go to from " 
-                          + str(city1) 
-                          + " : "
-                          )
-        
+        city2 = ''
+        if player.isAi() == False:
+            print("Available destination cities: " \
+            + str([x for x in self.board.G.neighbors(city1) 
+                  if self.doesPlayerHaveCardsForEdge(player, city1, x)]))
+            city2 = input(f"Please type the destination city to go to from {city1} : ")
+            
+        else:
+            choices = [x for x in self.board.G.neighbors(city1) 
+              if self.doesPlayerHaveCardsForEdge(player, city1, x)]
+            if len(choices) == 0:
+                print("No legal destination from {city1}")
+                return "Move complete"
+            city2 = random.choices(choices, k=1)[0]
+            print(f"AI selected destination city: {city2}")
+
+    
         while not self.board.hasEdge(city1, city2) and count < 5:
-            city2 = input("Invalid response.  "
-                              + "Please type one of the following cities "
-                              + "(without quotes): \n" 
-                              + str([x for x in self.board.G.neighbors(city1) 
-                                    if self.board.hasEdge(city1, x)]) 
-                              + " : "
-                              )
+            destination_cities = [x for x in self.board.G.neighbors(city1) if self.board.hasEdge(city1, x)]
+            city2 = input(f"Invalid response. Please type one of the following cities (without quotes): \n {destination_cities}") 
             count += 1    
             
         if count >=5:
             return "Move complete"
     
         #start exchange cards and place trains
-    
         routeDist = self.board.getEdgeWeight(city1, city2)
         spanColors = self.board.getEdgeColors(city1, city2)
         
         if len(spanColors) == 0:
             #a little harsh but will updated later to players start over
-            print("You have a selected two cities with no legal route")
+            print("Selected two cities with no legal route")
             return "Move complete"
         
         
-        print ("\n This route is of length: ")
-        self.printSepLine(routeDist)
-        print ("Your hand consists of: ")
+        print (f"This route is of length:{routeDist} ")
+        print ("Hand consists of: ")
         self.printSepLine(player.getHand())
         
         if len(spanColors) == 1:
             color = spanColors[0] #use first element, getEdgeColors returns list
             print ("This route is: " + str(color))
         else:
-            color = input("which color track would you like to claim? (" 
-                              + str(spanColors) 
-                              + " available): "
-                              )
-            if color not in spanColors:
-                print ("Invalid Color")
-                return "Move complete"
+            color = ''
+            if player.isAi() == False:
+                color = input(f"which color track would you like to claim? {spanColors} available): ")
+                if color not in spanColors:
+                    print ("Invalid Color")
+                    return "Move complete"
+            else:
+                color = random.choices(spanColors, k=1)[0]
+                print(f"AI selected track color: {color}")
                 
         #check to see if player has appropriate cards to play route 
         # (edge weight, color/wild)
@@ -474,28 +474,24 @@ class Game(object):
 
         availWild = player.hand['wild']
         if color == 'grey':
-            
-            color = input("Which color would you like to play "
-                              + "on this grey route? "
-                              + "(pick a color, not 'wild'): "
-                             )
-
-            if color not in self.deck.possibleColors:
-                print ("Invalid Color")
-                return "Move complete"
-            availColor = player.hand[color]
-            numColor = input("How many " + str(color) 
-                                 + " cards would you like to play? (" 
-                                 + str(availColor) 
-                                 + " available): "
-                                 )
+            if player.isAi() == False:
+                color = input("Which color would you like to play on this grey route? Pick a color, not 'wild'): ")
+                if color not in self.deck.possibleColors:
+                    print ("Invalid Color")
+                    return "Move complete"
+                availColor = player.hand[color]
+                numColor = input(f"How many {color} cards would you like to play? ({availColor}) available ")
+                                 
+            else:
+                color = random.choices(self.deck.possibleColors, k=1)[0]
+                availColor = player.hand[color]
+                numColor = random.randrange(0,availColor + 1)
+                print(f"AI selected color {numColor} {color} cards")
         else:
-            numColor = input("How many " 
-                                 + str(color) 
-                                 + " cards would you like to play? (" 
-                                 + str(availColor) 
-                                 + " available) "
-                                 )
+            if player.isAi() == False:
+                numColor = input(f"How many {color} cards would you like to play? ({availColor}) available: ")
+            else:
+                numColor = random.randrange(1,availColor + 1)
         if numColor not in [str(x) for x in range(routeDist + 1)]:
             print ("Invalid Entry")
             return "Move complete"
@@ -505,10 +501,11 @@ class Game(object):
             return "Move complete"
 
         if numColor < routeDist: #span distance
-            numWild = input("How many wild cards would you like to play? (" 
-                                + str(availWild) 
-                                + " available) "
-                                )
+            if player.isAi() == False:
+                numWild = input(f"How many wild cards would you like to play? {availWild} available)")
+            else:
+                numWild = random.randrange(0,availWild + 1)
+                print(f"AI selected {numWild} color cards")
             numWild = int(numWild)
             if numWild not in range(0, availWild +1):
                 print ("You do not have that many")
@@ -553,35 +550,29 @@ class Game(object):
 
         #assign a number to each ticket to make it easier to choose
         tickets = {x[0]:x[1] for x in zip(range(len(tickets)), tickets)}
-        print("Please select at least " + str(minNumToSelect) + ": ")
-        
-        self.formatTicketPrint(tickets)
+        if player.isAi() == False:
+            print("Please select at least " + str(minNumToSelect) + ": ")
+        TTRPrint.formatTicketPrint(tickets)
         
         choices = set()
-        choice = input("Select a number corresponding to the above tickets,"
-                            + " type done when finished: ")
+        if player.isAi() == False:
+            choice = input("Select the ID to the above tickets type 'done' when finished: ")
+            while (choice != 'done' and count < 7) or len(choices) < minNumToSelect:
+                try:
+                    choices.add(tickets[int(choice)])
+                    choice = input("Select the number corresponding to the above tickets, type 'done' when finished: ")
+                except:
+                    choice = input(f"Invalid Choice: Select the number corresponding to the above tickets, type 'done' when finished: "
+                                        + "must select at least {str(minNumToSelect)}")
+                    count += 1
+        else:
+            num_choices = random.sample(range(0, len(tickets)), minNumToSelect)
+            for index in num_choices:
+                choice = tickets[int(index)]
+                choices.add(choice)
 
-        while (choice != 'done' and count < 7) \
-               or len(choices) < minNumToSelect:
-            try:
-                choices.add(tickets[int(choice)])
-                choice = input("Select the number corresponding to the "
-                                   +"above tickets, type 'done' when finished: "
-                                  )
-            except:
-                choice = input("Invalid Choice: Select the number "
-                                    + "corresponding to the above tickets, "
-                                    + "type 'done' when finished: "
-                                    + " (must select at least "
-                                    + str(minNumToSelect)
-                                    + ") "
-                                  )
-                count += 1
-
-        print("You selected: ")
         for ticket in choices:
             player.addTicket(ticket)
-            print(ticket)
         
         
         #add tickets that weren't chosen to the ticketDiscardPile
@@ -589,8 +580,9 @@ class Game(object):
         for i in notChosen:
             self.deck.addToTicketDiscard(tickets[i])
         
-        print("All of your tickets: ")
-        self.printSepLine(player.getTickets())
+        print("Tickets selected: ")
+        for ticket in player.getTickets():
+            print(f"{ticket[0]} to {ticket[1]} | Length: {ticket[2]}")
         
         return "Move complete"
     
