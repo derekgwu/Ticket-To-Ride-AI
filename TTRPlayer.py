@@ -9,7 +9,8 @@ class Player(object):
                  startingTickets, 
                  playerBoard, 
                  playerPosition, 
-                 numTrains
+                 numTrains,
+                 ai
                  ):
         """orderNumber: int
         startingHand: list
@@ -17,7 +18,13 @@ class Player(object):
         playerBoard: PlayerBoard object from the TTRBoard module
         playerPosition: int
         """
-        self.name           = '' #ask for them to enter it on first turn
+        name = ""
+        if not ai:
+            name = input("Enter player name: ")
+        else:
+            import random
+            name = f"AI_Player_{random.randint(1000,9999)}"
+        self.name           = name #ask for them to enter it on first turn
         
         #implimented as a collection to avoid O(n) hand.remove(x)
         self.hand           = collections.Counter(startingHand)
@@ -29,14 +36,17 @@ class Player(object):
         
         #custom board to represent
         self.playerBoard    = playerBoard
+        self.ai             = ai
                     
     def removeCardsFromHand(self, color, numColor):
         """removes one ore more cards from hand
         assumes all cards are in hand, error if not
         cards: list
         """
-        assert self.hand[color] >= numColor
-        self.hand[color] -= numColor
+        if self.hand[color] >= numColor:
+            self.hand[color] -= numColor
+        else:
+            self.hand[color] = 0
         
     #add card to hand
     def addCardToHand(self, card):
@@ -80,8 +90,10 @@ class Player(object):
         return self.numTrains
     
     def playNumTrains(self, numTrains):
-        assert numTrains <= self.numTrains
-        self.numTrains -= numTrains
+        if(numTrains <= self.numTrains):
+            self.numTrains -= numTrains
+        else:
+            self.numTrains = 0
         
     def setPlayerName(self, name):
         """sets playerName to name
@@ -91,6 +103,9 @@ class Player(object):
     
     def getName(self):
         return self.name
+    
+    def isAi(self):
+        return self.ai
         
 
     # Get colors
@@ -109,7 +124,9 @@ class Player(object):
                 possibleCombinations.append(combo_dict)
         else:
             colorCount = self.hand.get(color)
-
+            
+            if colorCount == None:
+                colorCount = 0
             if colorCount >= weight:
                 possibleCombinations.append({color:weight})
 
