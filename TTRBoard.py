@@ -334,16 +334,20 @@ class Board(object):
         self.G.add_edge('Miami', 'New Orleans', 
                         weight = 6, 
                         edgeColors = ['red'])
+        
     
         #create a copy of the board to store the original state of the board
         self.copyBoard = self.G.copy()
+
         
     def showBoard(self, board, pauseTime = 7):
         """display board
         """
-        pos=nx.spring_layout(board)
+        pos=nx.spring_layout(board,scale=10)
         nx.draw(board, pos)
-        nx.draw_networkx_edge_labels(board, pos)
+        edge_labels = {(u, v): f"{d['weight']} {d['edgeColors'][0]}" for u, v, d in self.G.edges(data=True)}
+        nx.draw(self.G, pos, with_labels=True, node_color='skyblue', node_size=1000, font_size=6)
+        nx.draw_networkx_edge_labels(board, pos, edge_labels=edge_labels)
         plt.ion()
         plt.show()
         plt.pause(pauseTime)

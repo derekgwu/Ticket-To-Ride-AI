@@ -1,6 +1,7 @@
 import collections
 from itertools import combinations
 from collections import Counter
+from TTRAI import AI
 
 class Player(object):
     
@@ -37,6 +38,7 @@ class Player(object):
         #custom board to represent
         self.playerBoard    = playerBoard
         self.ai             = ai
+
                     
     def removeCardsFromHand(self, color, numColor):
         """removes one ore more cards from hand
