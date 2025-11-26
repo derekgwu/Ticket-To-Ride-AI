@@ -70,8 +70,8 @@ class Player(object):
         """updates the value in the tickets dict to True for key: ticket
         ticket: tuple(city1, city2, value)
         """
-        assert ticket in self.tickets
-        self.tickets = True
+        if ticket in self.tickets:
+            self.tickets = True
     
     def getHand(self):
         return self.hand
@@ -134,8 +134,9 @@ class Player(object):
 
 
             for x in range(min(colorCount, weight) + 1):
-                for y in range(min(wilds, weight - x) + 1):
-                    possibleCombinations.append({color:x, "wild":y})
+                if wilds is not None:
+                    for y in range(min(wilds, weight - x) + 1):
+                        possibleCombinations.append({color:x, "wild":y})
                 
         return possibleCombinations
 

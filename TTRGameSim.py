@@ -96,13 +96,32 @@ class Game(object):
                 if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
                     # so the options are any amount of the color and greys
                     # if route is grey: any combination of 2 cards
+
+                    #it can only be combined with a wild card, i.e green and purple cannot be combined
                     possibleCombinations = player.getCombinations(edge['weight'], color)
 
+                    #check for multiple color violations
+                    validCombinations = []
+                    for combination in possibleCombinations:
+                        base_color = None
+                        valid = True
+                        for color in combination:
+                            if base_color == None and color != 'wild':
+                                base_color = color
+                            if base_color != color and color != 'wild':
+                                valid = False
+                        if valid:
+                            validCombinations.append(combination)
+                  
+
+                        
+
+                    
                     moves.append({
                         "move": "train",
                         "edge": edge,
                         "color": color,
-                        "possible_cards": possibleCombinations
+                        "possible_cards": validCombinations
                     })
         # pick up destination cards
 
@@ -116,7 +135,7 @@ class Game(object):
         #can also draw from the facedown pile
         moves.append({
                 "move": "card",
-                "card": "facedown",
+                "card": self.deck.pickFaceDown(),
         })
 
         #pick up more destination cards
@@ -126,6 +145,9 @@ class Game(object):
                 "move": "ticket",
                 "ticket": ticket,
             })
+
+            #readd the tickets back
+            self.deck.tickets.append(ticket)
         return moves
 
             
@@ -150,14 +172,12 @@ class Game(object):
                 'trains_left': player.getNumTrains()
             }
         
-        reward = player.getReward()
+        
         return {
             'edges' : edges,
-            'hand' : hand,
+            'player' : player,
             'draw_pile' : draw_pile,
-            'tickets' : destination_tickets,
             'public_player_info' : player_info,
-            'reward' : reward
         }
 
     
@@ -254,7 +274,10 @@ class Game(object):
         But does not set the values
         """
         total = 0
+        print(player.tickets)
         for ticket in player.tickets:
+            if ticket is None:
+                continue
             city1 = ticket[0]
             city2 = ticket[1]
             value = ticket[2]
