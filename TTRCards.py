@@ -70,6 +70,7 @@ class Cards(object):
         try:
             return self.cards.pop()
         except IndexError:
+            print("Cards")
             print("\n There are no more cards in the deck! \n")
     
     def dealTicket(self):
@@ -79,7 +80,10 @@ class Cards(object):
         try:
             return self.tickets.pop()
         except IndexError:
+            print("tickets")
             print("\n There are no more tickets in the deck! \n")
+    
+
     
     def dealCards(self, numCards):
         """returns a list of (numCards) cards

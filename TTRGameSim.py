@@ -116,13 +116,13 @@ class Game(object):
 
                         
 
-                    
-                    moves.append({
-                        "move": "train",
-                        "edge": edge,
-                        "color": color,
-                        "possible_cards": validCombinations
-                    })
+                    if len(validCombinations) > 0:
+                        moves.append({
+                            "move": "train",
+                            "edge": edge,
+                            "color": color,
+                            "possible_cards": validCombinations
+                        })
         # pick up destination cards
 
         #pick up train cards
@@ -133,10 +133,10 @@ class Game(object):
             })
         
         #can also draw from the facedown pile
-        moves.append({
-                "move": "card",
-                "card": self.deck.pickFaceDown(),
-        })
+        #moves.append({
+        #        "move": "card",
+        #        "card": self.deck.pickFaceDown(),
+        #})
 
         #pick up more destination cards
         tickets = self.deck.dealTickets(self.numTicketsDealt)
@@ -154,6 +154,7 @@ class Game(object):
     def getObservations(self, player):
         #get all edges on the board
         edges = self.board.iterEdges()
+        
 
         #get the player's hand
         hand = player.getHand()
@@ -274,7 +275,6 @@ class Game(object):
         But does not set the values
         """
         total = 0
-        print(player.tickets)
         for ticket in player.tickets:
             if ticket is None:
                 continue
@@ -364,12 +364,12 @@ class Game(object):
         player: player object
         """
         if player.isAi():
-            self.aiModel.monteCarlo(player, 6)
+            self.aiModel.monteCarlo(player, 10)
         #print ("------------------------------")
         #print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
-        print(len(self.getLegalActions(player)))
+        #print(len(self.getLegalActions(player)))
         #print ("------------------------------")
-        print(self.getReward(player))
+        #print(self.getReward(player))
         if player.isAi() == False:
             choice = input("Please type: cards, trains or tickets: ")
         else:
