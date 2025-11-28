@@ -9,6 +9,7 @@ import TTRPlayer
 import collections
 import pprint
 import random
+import TTRAI
 
 
 import TTRPrint
@@ -33,6 +34,7 @@ class Game(object):
         self.players               = []
         
         self.posToMove             = 0
+        self.aiModel               = TTRAI.AI(self, self.board)
         
         #point values for tracks of different lengths
         self.routeValues           = {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
@@ -94,14 +96,33 @@ class Game(object):
                 if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
                     # so the options are any amount of the color and greys
                     # if route is grey: any combination of 2 cards
+
+                    #it can only be combined with a wild card, i.e green and purple cannot be combined
                     possibleCombinations = player.getCombinations(edge['weight'], color)
 
-                    moves.append({
-                        "move": "train",
-                        "edge": edge,
-                        "color": color,
-                        "possible_cards": possibleCombinations
-                    })
+                    #check for multiple color violations
+                    validCombinations = []
+                    for combination in possibleCombinations:
+                        base_color = None
+                        valid = True
+                        for color in combination:
+                            if base_color == None and color != 'wild':
+                                base_color = color
+                            if base_color != color and color != 'wild':
+                                valid = False
+                        if valid:
+                            validCombinations.append(combination)
+                  
+
+                        
+
+                    if len(validCombinations) > 0:
+                        moves.append({
+                            "move": "train",
+                            "edge": edge,
+                            "color": color,
+                            "possible_cards": validCombinations
+                        })
         # pick up destination cards
 
         #pick up train cards
@@ -112,10 +133,10 @@ class Game(object):
             })
         
         #can also draw from the facedown pile
-        moves.append({
-                "move": "card",
-                "card": "facedown",
-        })
+        #moves.append({
+        #        "move": "card",
+        #        "card": self.deck.pickFaceDown(),
+        #})
 
         #pick up more destination cards
         tickets = self.deck.dealTickets(self.numTicketsDealt)
@@ -124,23 +145,48 @@ class Game(object):
                 "move": "ticket",
                 "ticket": ticket,
             })
+
+            #readd the tickets back
+            self.deck.tickets.append(ticket)
         return moves
 
             
     def getObservations(self, player):
-        observations = []
+        #get all edges on the board
+        edges = self.board.iterEdges()
+        
+
         #get the player's hand
         hand = player.getHand()
-
-        for card in hand:
-            observations.append()
-
 
         #get the face up cards
         draw_pile = self.deck.getDrawPile()
 
-        #get all edges on the board
-        edges = self.board.iterEdges()
+        #get the player's destination tickets
+        destination_tickets = player.tickets
+
+        #get other player information
+        player_info = {}
+        for player in self.players:
+            player_info[player.name] = {
+                'score' : player.getPoints(), 
+                'trains_left': player.getNumTrains()
+            }
+        
+        
+        return {
+            'edges' : edges,
+            'player' : player,
+            'draw_pile' : draw_pile,
+            'public_player_info' : player_info,
+        }
+
+    
+    def getReward(self, player):
+        curr = player.getPoints() + self.viewPlayerTicketsScore(player)
+        if player == self.viewLongestPath():
+            curr += self.pointsForLongestRoute
+        return curr
 
 
 
@@ -221,6 +267,27 @@ class Game(object):
                 continue
             if player.playerBoard.hasPath(city1, city2):
                 player.addPoints(value)
+
+    def viewPlayerTicketsScore(self, player):
+        """returns None.  
+        Scores player's destination tickets and 
+        adds/subtracts from player's points
+        But does not set the values
+        """
+        total = 0
+        for ticket in player.tickets:
+            if ticket is None:
+                continue
+            city1 = ticket[0]
+            city2 = ticket[1]
+            value = ticket[2]
+            posNodes = player.playerBoard.getNodes()
+            if city1 not in posNodes or city2 not in posNodes:
+                total -= value
+                continue
+            if player.playerBoard.hasPath(city1, city2):
+                total += value
+        return total
                 
     def scoreLongestPath(self):
         """determines which player has the longest route and 
@@ -248,6 +315,33 @@ class Game(object):
                 player.addPoints(self.pointsForLongestRoute)
         
         #does not return anthing
+    
+
+    def viewLongestPath(self):
+        """determines which player has the longest route and 
+        adjusts their score accordingly
+        players: list of players
+        returns the current player with the longest path, the score bonus is found
+        in the game object
+        """
+
+        scores = { x:(0, ()) for x in self.players }
+        longestPath = 0
+        for player in scores:
+
+            for city in player.playerBoard.getCities():
+                pathInfo = player.playerBoard.longestPath(city)
+                if pathInfo[0] > scores[player][0]:
+                    scores[player] = pathInfo
+        
+            if scores[player][0] > longestPath:
+                longestPath = scores[player][0]
+        
+        for player in scores:
+            if scores[player][0] == longestPath:
+                return player
+
+
 
     def printAllPlayerData(self):
         """prints out all of the non method attributes values for all players
@@ -269,10 +363,13 @@ class Game(object):
         """player chooses 'cards', 'trains', 'tickets'
         player: player object
         """
+        if player.isAi():
+            self.aiModel.monteCarlo(player, 10)
         #print ("------------------------------")
         #print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
-        #print(self.getLegalActions(player))
+        #print(len(self.getLegalActions(player)))
         #print ("------------------------------")
+        #print(self.getReward(player))
         if player.isAi() == False:
             choice = input("Please type: cards, trains or tickets: ")
         else:
@@ -410,7 +507,8 @@ class Game(object):
         TTRPrint.printLine()
         #only print routes that are legal given the players cards
         #sort alphabetically
-        playable_routes = [x for x in sorted(self.board.iterEdges()) if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])]
+        
+        playable_routes = [x for x in self.board.iterEdges() if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])]
         TTRPrint.formatTrainPrint([x for x in sorted(self.board.iterEdges()) 
                         if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])])
         TTRPrint.printLine()
@@ -429,6 +527,7 @@ class Game(object):
             for route in playable_routes:
                 playable_choices.append(route[0])
             city1 = random.choices(playable_choices, k=1)[0]
+            print(city1)
             print(f"AI selected start city: {city1}")
         if count >= 5:
             return "Move complete"
@@ -476,8 +575,9 @@ class Game(object):
         
         
         print (f"This route is of length: {routeDist} ")
-        print ("Hand consists of: ")
-        TTRPrint.formatPrintHand(player.getHand())
+        if player.isAi() == False:
+            print ("Hand consists of: ")
+            TTRPrint.formatPrintHand(player.getHand())
         
         if len(spanColors) == 1:
             color = spanColors[0] #use first element, getEdgeColors returns list
@@ -516,10 +616,17 @@ class Game(object):
                 numColor = input(f"How many {color} cards would you like to play? ({availColor}) available ")
                                  
             else:
-                possible_colors = list(player.getHand().keys())
-                color = random.choices(possible_colors, k=1)[0]
+                possible_colors = player.getHand()
+
+                #filter only playable ones
+                playable = []
+                for color, count in possible_colors.items():
+                    if availWild + count >= routeDist and color != 'wild':
+                        playable.append(color)
+                color = random.choices(playable, k=1)[0]
                 availColor = player.hand[color]
-                numColor = random.randrange(0,availColor + 1)
+                min_num_needed = max(0, routeDist - availWild)
+                numColor = random.randrange(min_num_needed,availColor + 1)
                 print(f"AI selected color {numColor} {color} cards")
         else:
             if player.isAi() == False:
@@ -538,7 +645,8 @@ class Game(object):
             if player.isAi() == False:
                 numWild = input(f"How many wild cards would you like to play? {availWild} available)")
             else:
-                numWild = random.randrange(0,availWild + 1)
+                wild_needed = routeDist - numColor
+                numWild = random.randrange(wild_needed,availWild + 1)
                 print(f"AI selected {numWild} wild color cards")
             numWild = int(numWild)
             if numWild not in range(0, availWild +1):
