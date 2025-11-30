@@ -41,10 +41,6 @@ class Player(object):
         # after ever move the action is cleared, so if a player picks a wild, turn end and is cleared
         self.previousAction = {}
 
-        
-
-
-        
         #custom board to represent
         self.playerBoard    = playerBoard
         self.ai             = ai
