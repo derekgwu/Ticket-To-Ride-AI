@@ -164,7 +164,6 @@ class AI:
             #add points
             new_state['player'].addPoints(self.game.routeValues[routeDist])
             #the player's theorectical points for entering this state
-       
 
             #if the action is draw a card
         elif action['move'] == 'card':

@@ -10,6 +10,7 @@ import collections
 import pprint
 import random
 import TTRAI
+from itertools import combinations
 
 
 import TTRPrint
@@ -80,7 +81,52 @@ class Game(object):
 
         if self.checkEndingCondition(player):
             return
+
+        # if the player previously selected draw_tickets then we return all subsets as possiblities
+        # if there are pending tickets the only legal action is to select a subset
+        if player.pendingTickets:
+            res = [list(combinations(player.pendingTickets, r)) for r in range(1, len(player.pendingTickets) + 1)]  
+            res = [list(sublist) for g in res for sublist in g] 
+            moves.append({
+                "move": "select_tickets",
+                "possible_tickets": res
+            })
+            return
         
+
+        if player.previousAction and player.previousAction["move"] == "draw_card1":
+            for card in self.deck.getDrawPile():
+                if card != "wild":
+                    moves.append({
+                            "move":"drawcard2",
+                            "card": card
+                    })
+            moves.append({
+                    "move": "card",
+                    "card": "drawPile",
+            })
+            return 
+        
+
+
+        #pick up train cards
+        for card in self.deck.getDrawPile():
+            moves.append({
+                "move": "draw_card1",
+                "card": card,
+            })
+        moves.append({
+                "move": "draw_card1",
+                "card": "drawPile",
+        })
+        
+
+        #initate draw of destination tickets
+        moves.append({
+                "move":"draw_tickets"
+        })  
+
+
         # A train move is appended as 
         # moves.append({
         #                 "move": type,
@@ -112,9 +158,6 @@ class Game(object):
                                 valid = False
                         if valid:
                             validCombinations.append(combination)
-                  
-
-                        
 
                     if len(validCombinations) > 0:
                         moves.append({
@@ -123,31 +166,7 @@ class Game(object):
                             "color": color,
                             "possible_cards": validCombinations
                         })
-        # pick up destination cards
-
-        #pick up train cards
-        for card in self.deck.getDrawPile():
-            moves.append({
-                "move": "card",
-                "card": card,
-            })
-        
-        #can also draw from the facedown pile
-        #moves.append({
-        #        "move": "card",
-        #        "card": self.deck.pickFaceDown(),
-        #})
-
-        #pick up more destination cards
-        tickets = self.deck.dealTickets(self.numTicketsDealt)
-        for ticket in tickets:
-            moves.append({
-                "move": "ticket",
-                "ticket": ticket,
-            })
-
-            #readd the tickets back
-            self.deck.tickets.append(ticket)
+     
         return moves
 
             
@@ -370,6 +389,7 @@ class Game(object):
         #print(len(self.getLegalActions(player)))
         #print ("------------------------------")
         #print(self.getReward(player))
+        
         if player.isAi() == False:
             choice = input("Please type: cards, trains or tickets: ")
         else:
@@ -396,17 +416,19 @@ class Game(object):
         if count >= 5:
             return "Move complete"
         
-            
+
         if choice == 'cards':
             self.pickCards(player)
-            return "Move complete"
-        
+
         elif choice == 'trains':
             self.placeTrains(player)
-            return "Move complete"
+
         else:
             self.pickTickets(player)
-            return "Move complete"
+        
+
+        player.endTurn()
+        return "Move complete"
         
     
     def pickCards(self, player):
@@ -692,7 +714,8 @@ class Game(object):
 
         count = 0
         tickets = self.deck.dealTickets(self.numTicketsDealt)
-
+        player.pendingTickets = tickets
+        
         #assign a number to each ticket to make it easier to choose
         tickets = {x[0]:x[1] for x in zip(range(len(tickets)), tickets)}
         if player.isAi() == False:
@@ -730,6 +753,9 @@ class Game(object):
             print(f"{ticket[0]} to {ticket[1]} | Length: {ticket[2]}")
             print()
         
+
+        self.pendingTickets = []
+
         return "Move complete"
     
 
