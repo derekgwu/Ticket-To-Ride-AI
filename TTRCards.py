@@ -1,5 +1,6 @@
 
 import random
+from collections import Counter
 
 class Cards(object):
     def __init__(self, sizeDrawPile, maxWilds):

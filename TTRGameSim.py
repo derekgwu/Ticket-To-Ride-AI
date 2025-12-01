@@ -11,6 +11,7 @@ import pprint
 import random
 import TTRAI
 from itertools import combinations
+from collections import Counter
 
 
 import TTRPrint
@@ -40,7 +41,7 @@ class Game(object):
         #card counting for observations
         #can do card couting on the face cards taken in other peoples hands
         self.cardCounting = {}
-        
+
         #point values for tracks of different lengths
         self.routeValues           = {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
 
@@ -77,10 +78,85 @@ class Game(object):
             self.players.append(player)
         
     
+    #ADDITION
+    def getLegalActions(self, player):
+        moves = []
+
+        if self.checkEndingCondition(player):
+            return
+        
+        # A train move is appended as 
+        # moves.append({
+        #                 "move": type,
+        #                 "edge": edge -> dictionary with edge: (city1,city2), weight: int, edgeColors: ["c1", "c2"]
+        #                 "color": color, # including this because an ed
+        #                 "possible_cards": possibleCombinations -> List of Counters {red:1, blue: 1, etc}
+        #             }) 
+
+        #generates all possible moves that can be played (currently a single move actually holds lots of move (different combos of cars))
+        for edge in self.board.getEdgesData():
+            city1, city2 = edge["edge"]
+            for color in edge["edgeColors"]:
+                if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
+                    # so the options are any amount of the color and greys
+                    # if route is grey: any combination of 2 cards
+
+                    #it can only be combined with a wild card, i.e green and purple cannot be combined
+                    possibleCombinations = player.getCombinations(edge['weight'], color)
+
+                    #check for multiple color violations
+                    validCombinations = []
+                    for combination in possibleCombinations:
+                        base_color = None
+                        valid = True
+                        for color in combination:
+                            if base_color == None and color != 'wild':
+                                base_color = color
+                            if base_color != color and color != 'wild':
+                                valid = False
+                        if valid:
+                            validCombinations.append(combination)
+                  
+
+                        
+
+                    if len(validCombinations) > 0:
+                        moves.append({
+                            "move": "train",
+                            "edge": edge,
+                            "color": color,
+                            "possible_cards": validCombinations
+                        })
+        # pick up destination cards
+
+        #pick up train cards
+        for card in self.deck.getDrawPile():
+            moves.append({
+                "move": "card",
+                "card": card,
+            })
+        
+        #can also draw from the facedown pile
+        #moves.append({
+        #        "move": "card",
+        #        "card": self.deck.pickFaceDown(),
+        #})
+
+        #pick up more destination cards
+        tickets = self.deck.dealTickets(self.numTicketsDealt)
+        for ticket in tickets:
+            moves.append({
+                "move": "ticket",
+                "ticket": ticket,
+            })
+
+            #readd the tickets back
+            self.deck.tickets.append(ticket)
+        return moves
 
 
     #ADDITION
-    def getLegalActions(self, player):
+    def getPossibleTransitions(self, player):
         moves = []
 
         #game is over no possible moves to be made
@@ -188,6 +264,8 @@ class Game(object):
 
         #get the player's destination tickets
         destination_tickets = player.tickets
+
+
 
         #get other player information
         player_info = {}
@@ -386,7 +464,7 @@ class Game(object):
             self.aiModel.monteCarlo(player, 10)
         print ("------------------------------")
         print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getLegalActions(player))
+        print(self.getPossibleTransitions(player))
         print ("------------------------------")
         print(self.getReward(player))
         
@@ -452,7 +530,7 @@ class Game(object):
 
         print ("------------------------------")
         print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getLegalActions(player))
+        print(self.getPossibleTransitions(player))
         print ("------------------------------")
 
         #if player is not AI
@@ -554,7 +632,7 @@ class Game(object):
 
         print ("------------------------------")
         print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getLegalActions(player))
+        print(self.getPossibleTransitions(player))
         print ("------------------------------")
         
         playable_routes = [x for x in self.board.iterEdges() if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])]
@@ -748,7 +826,7 @@ class Game(object):
 
         print ("------------------------------")
         print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getLegalActions(player))
+        print(self.getPossibleTransitions(player))
         print ("------------------------------")
 
         #assign a number to each ticket to make it easier to choose
