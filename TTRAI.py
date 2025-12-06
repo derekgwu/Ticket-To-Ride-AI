@@ -210,7 +210,11 @@ class AI:
             #choose a card combination
             combo = random.choice(action['possible_cards'])
             #pick a non wild color for the track
-            color_choice = next((c for c in combo.keys() if c != 'wild'), 'wild')
+            color_choice = 'wild'  # default
+            for c in combo.keys():
+                if c != 'wild':
+                    color_choice = c
+                    break
 
             #claim route on player board
             player.playerBoard.addEdge(city1, city2, routeDist, color_choice)
