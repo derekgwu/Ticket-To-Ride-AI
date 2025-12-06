@@ -244,10 +244,8 @@ class Game(object):
             curr += self.pointsForLongestRoute
         return curr
 
-
-
-        
-
+    def getRewardFast(self, player):
+        return player.getPoints() + self.viewPlayerTicketsScore(player)
     
     def printSepLine(self, toPrint):
         print(toPrint)

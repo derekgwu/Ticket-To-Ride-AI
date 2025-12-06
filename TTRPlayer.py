@@ -2,6 +2,7 @@ import collections
 from itertools import combinations
 from collections import Counter
 from TTRAI import AI
+import copy
 
 class Player(object):
     
@@ -143,10 +144,10 @@ class Player(object):
     def clone_for_sim(self):
         # To reduce processing overhead for AI simulations
 
-        hand_copy = list(self.getHand().elements())
-        tickets_copy = list(self.getTickets())
-        board_ref = self.playerBoard
-        position = self.playerPosition
+        hand_copy = copy.deepcopy(self.getHand())
+        tickets_copy = copy.deepcopy(self.getTickets())
+        board_ref = copy.deepcopy(self.playerBoard)
+        position = copy.deepcopy(self.playerPosition)
         num_trains = self.getNumTrains()
         ai_flag = self.isAi()
 

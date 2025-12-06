@@ -85,12 +85,12 @@ class AI:
         if depth == 0:
             return 0
         
+        legal_actions = self.game.getLegalActions(state['player'])
+
         #unexplored node, expansion
-        if len(root.children) < len(self.game.getLegalActions(state['player'])):
+        if len(root.children) < len(legal_actions):
             #randomly pick a new move
-            next_actions = self.game.getLegalActions(state['player'])
-            ##add to the tree
-            action = random.choice(next_actions)
+            action = random.choice(legal_actions)
 #
             new_state = self.makeNextMove(state, action)
             new_node = MTNode(new_state, action, None)
@@ -99,7 +99,7 @@ class AI:
             root.children.append(new_node)
 
 
-            return self.rollout(new_node, depth, root.state['player'])
+            return self.rollout(new_node, depth-1, root.state['player'])
         
         #selection - move down the existing tree
         #compute UCT value for each next action, pick the action with the highest UCT
@@ -108,7 +108,7 @@ class AI:
         #take the action, generate a new observcation after taking that step
         next_state = next_node.state
 
-        q = self.game.getReward(next_state['player']) + self.simulate(next_state, depth - 1, next_node)
+        q = self.game.getRewardFast(next_state['player']) + self.simulate(next_state, depth - 1, next_node)
 
         #backpropagation
         next_node.visit_count += 1
@@ -118,13 +118,21 @@ class AI:
         return q
         
     
-    def rollout(self, root, depth, playerToTrack):
+    def rollout(self, state, depth, playerToTrack):
         if depth == 0:
             return 0
         
         discount_factor = 1
         
-        #pick a random next legal action; note it'll probably be a different person
+        legal_actions = self.game.getLegalActions(state['player'])
+        if not legal_actions:
+            return self.game.getRewardFast(state['player'])
+
+        action = random.choice(legal_actions)
+        next_state = self.makeNextMove(state, action)
+
+        return self.game.getRewardsFast(next_state['player']) + \
+            discount_factor * self.rollout(next_state, depth - 1, playerToTrack)
 
         #next's person to move
         curr_move = self.game.posToMove
@@ -138,13 +146,13 @@ class AI:
         state = self.game.getObservations(next_player)
 
         next_state = self.makeNextMove(state, action)
-        return self.game.getReward(playerToTrack) + (discount_factor * self.rollout(next_state, depth - 1, playerToTrack))
+        return self.game.getRewardFast(playerToTrack) + (discount_factor * self.rollout(next_state, depth - 1, playerToTrack))
 
     
     def makeNextMove(self, state, action):
         new_state = self.makeStateCopy(state)
     
-       #if the action is a place train down
+        #if the action is a place train down
         if action['move'] == 'train':
             city1 =action['edge']['edge'][0]
             city2 =action['edge']['edge'][1]
@@ -164,12 +172,10 @@ class AI:
             #add points
             new_state['player'].addPoints(self.game.routeValues[routeDist])
             #the player's theorectical points for entering this state
-       
 
             #if the action is draw a card
         elif action['move'] == 'card':
             new_state['player'].hand[action['card']] += 1   
-       
             #if the action is pick up a destination ticket
         else:
             new_state['player'].tickets[action['ticket']] = False
