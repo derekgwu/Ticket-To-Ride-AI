@@ -136,6 +136,9 @@ class AI:
 
         #generate a random action for them
         next_actions = self.game.getLegalActions(next_player)
+        #no more legal moves
+        if not next_actions:
+            return self.game.getReward(playerToTrack)
         action = random.choice(next_actions)
         state = self.game.getObservations(next_player)
 

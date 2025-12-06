@@ -78,8 +78,6 @@ class Game(object):
     def getLegalActions(self, player):
         moves = []
 
-        if self.checkEndingCondition(player):
-            return []
         
         # A train move is appended as 
         # moves.append({
