@@ -111,7 +111,7 @@ class Player(object):
         
 
     # Get colors
-    def getCombinations(self,weight, color):
+    def getCombinations(self, weight, color):
         possibleCombinations = []
         wilds = self.hand.get("wild") 
 
@@ -140,7 +140,21 @@ class Player(object):
                 
         return possibleCombinations
 
+    def clone_for_sim(self):
+        # To reduce processing overhead for AI simulations
 
-    
-        
-        
+        hand_copy = list(self.getHand().elements())
+        tickets_copy = list(self.getTickets())
+        board_ref = self.playerBoard
+        position = self.playerPosition
+        num_trains = self.getNumTrains()
+        ai_flag = self.isAi()
+
+        return Player (
+            hand_copy,
+            tickets_copy,
+            board_ref,
+            position,
+            num_trains,
+            ai_flag,
+        )

@@ -177,20 +177,34 @@ class AI:
         return new_state
 
     def makeStateCopy(self, state):
-        player = TTRPlayer.Player(
-                    copy.deepcopy(state['player'].getHand()),
-                    copy.deepcopy(state['player'].getTickets()),
-                    copy.deepcopy(state['player'].playerBoard),
-                    state['player'].playerPosition,
-                    state['player'].getNumTrains(),
-                    state['player'].isAi()
-                )
-        edges = copy.deepcopy(state['edges'])
-        draw_pile = copy.deepcopy(state['draw_pile'].copy())
-        player_info = copy.deepcopy(state['public_player_info'])
+        # player = TTRPlayer.Player(
+        #             copy.deepcopy(state['player'].getHand()),
+        #             copy.deepcopy(state['player'].getTickets()),
+        #             copy.deepcopy(state['player'].playerBoard),
+        #             state['player'].playerPosition,
+        #             state['player'].getNumTrains(),
+        #             state['player'].isAi()
+        #         )
+        # edges = copy.deepcopy(state['edges'])
+        # draw_pile = copy.deepcopy(state['draw_pile'].copy())
+        # player_info = copy.deepcopy(state['public_player_info'])
+        # return {
+        #     'edges' : edges,
+        #     'player' : player,
+        #     'draw_pile' : draw_pile,
+        #     'public_player_info' : player_info,
+        # }
+
+        player = state['player'].clone_for_sim()
+        edges = state['edges'].copy() if hasattr(state['edges'], "copy") else state['edges']
+        draw_pile = list(state['draw_pile'])
+        player_info = {
+            pid: info.copy() if hasattr(info, "copy") else info
+            for pid, info in state['public_player_info'].items()
+        }
         return {
-            'edges' : edges,
-            'player' : player,
-            'draw_pile' : draw_pile,
-            'public_player_info' : player_info,
+            'edges': edges,
+            'player': player,
+            'draw_pile': draw_pile,
+            'public_player_info': player_info
         }

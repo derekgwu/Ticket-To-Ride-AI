@@ -76,31 +76,91 @@ class Game(object):
 
     #ADDITION
     def getLegalActions(self, player):
+        # moves = []
+
+        # if self.checkEndingCondition(player):
+        #     return
+        
+        # # A train move is appended as 
+        # # moves.append({
+        # #                 "move": type,
+        # #                 "edge": edge -> dictionary with edge: (city1,city2), weight: int, edgeColors: ["c1", "c2"]
+        # #                 "color": color, # including this because an ed
+        # #                 "possible_cards": possibleCombinations -> List of Counters {red:1, blue: 1, etc}
+        # #             }) 
+
+        # #generates all possible moves that can be played (currently a single move actually holds lots of move (different combos of cars))
+        # for edge in self.board.getEdgesData():
+        #     city1, city2 = edge["edge"]
+        #     for color in edge["edgeColors"]:
+        #         if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
+        #             # so the options are any amount of the color and greys
+        #             # if route is grey: any combination of 2 cards
+
+        #             #it can only be combined with a wild card, i.e green and purple cannot be combined
+        #             possibleCombinations = player.getCombinations(edge['weight'], color)
+
+        #             #check for multiple color violations
+        #             validCombinations = []
+        #             for combination in possibleCombinations:
+        #                 base_color = None
+        #                 valid = True
+        #                 for color in combination:
+        #                     if base_color == None and color != 'wild':
+        #                         base_color = color
+        #                     if base_color != color and color != 'wild':
+        #                         valid = False
+        #                 if valid:
+        #                     validCombinations.append(combination)
+                  
+
+                        
+
+        #             if len(validCombinations) > 0:
+        #                 moves.append({
+        #                     "move": "train",
+        #                     "edge": edge,
+        #                     "color": color,
+        #                     "possible_cards": validCombinations
+        #                 })
+        # # pick up destination cards
+
+        # #pick up train cards
+        # for card in self.deck.getDrawPile():
+        #     moves.append({
+        #         "move": "card",
+        #         "card": card,
+        #     })
+        
+        # #can also draw from the facedown pile
+        # #moves.append({
+        # #        "move": "card",
+        # #        "card": self.deck.pickFaceDown(),
+        # #})
+
+        # #pick up more destination cards
+        # tickets = self.deck.dealTickets(self.numTicketsDealt)
+        # for ticket in tickets:
+        #     moves.append({
+        #         "move": "ticket",
+        #         "ticket": ticket,
+        #     })
+
+        #     #readd the tickets back
+        #     self.deck.tickets.append(ticket)
+        # return moves
+
         moves = []
 
         if self.checkEndingCondition(player):
             return
         
-        # A train move is appended as 
-        # moves.append({
-        #                 "move": type,
-        #                 "edge": edge -> dictionary with edge: (city1,city2), weight: int, edgeColors: ["c1", "c2"]
-        #                 "color": color, # including this because an ed
-        #                 "possible_cards": possibleCombinations -> List of Counters {red:1, blue: 1, etc}
-        #             }) 
-
-        #generates all possible moves that can be played (currently a single move actually holds lots of move (different combos of cars))
         for edge in self.board.getEdgesData():
             city1, city2 = edge["edge"]
             for color in edge["edgeColors"]:
                 if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
-                    # so the options are any amount of the color and greys
-                    # if route is grey: any combination of 2 cards
+                    possibleCombinations = player.getCombinations(edge["weight"], color)
 
-                    #it can only be combined with a wild card, i.e green and purple cannot be combined
-                    possibleCombinations = player.getCombinations(edge['weight'], color)
-
-                    #check for multiple color violations
                     validCombinations = []
                     for combination in possibleCombinations:
                         base_color = None
@@ -112,10 +172,7 @@ class Game(object):
                                 valid = False
                         if valid:
                             validCombinations.append(combination)
-                  
-
-                        
-
+                    
                     if len(validCombinations) > 0:
                         moves.append({
                             "move": "train",
@@ -123,7 +180,6 @@ class Game(object):
                             "color": color,
                             "possible_cards": validCombinations
                         })
-        # pick up destination cards
 
         #pick up train cards
         for card in self.deck.getDrawPile():
