@@ -10,6 +10,7 @@ import collections
 import pprint
 import random
 import TTRAI
+import networkx
 
 
 import TTRPrint
@@ -70,89 +71,39 @@ class Game(object):
                                                 True
                                                 )                          
             self.players.append(player)
-        
-    
+
+        # Precompute best paths for every ticket as heuristic
+        self.ticket_paths = {}
+        self.ticket_colors = {}
+
+        for ticket in self.deck.tickets:
+            city1, city2, value = ticket
+            try:
+                path_nodes = self.board.getShortestPath(city1, city2)
+            except Exception:
+                self.ticket_paths[ticket] = []
+                self.ticket_colors[ticket] = {}
+                continue
+            
+            edges = list(zip(path_nodes, path_nodes[1:]))
+            self.ticket_paths[ticket] = edges
+
+            color_needs = collections.Counter()
+            for u, v in edges:
+                data = self.board.G.get_edge_data(u, v)
+                if not data:
+                    continue
+                edge_colors = data.get("edgeColors", [])
+                non_grey = [c for c in edge_colors if c != 'grey']
+                if non_grey:
+                    color_needs[non_grey[0]] += data.get("weight", 1)
+            self.ticket_colors[ticket] = color_needs
 
 
-    #ADDITION
     def getLegalActions(self, player):
-        # moves = []
-
-        # if self.checkEndingCondition(player):
-        #     return
-        
-        # # A train move is appended as 
-        # # moves.append({
-        # #                 "move": type,
-        # #                 "edge": edge -> dictionary with edge: (city1,city2), weight: int, edgeColors: ["c1", "c2"]
-        # #                 "color": color, # including this because an ed
-        # #                 "possible_cards": possibleCombinations -> List of Counters {red:1, blue: 1, etc}
-        # #             }) 
-
-        # #generates all possible moves that can be played (currently a single move actually holds lots of move (different combos of cars))
-        # for edge in self.board.getEdgesData():
-        #     city1, city2 = edge["edge"]
-        #     for color in edge["edgeColors"]:
-        #         if self.doesPlayerHaveCardsForEdgeColCheck(player, city1, city2, color):
-        #             # so the options are any amount of the color and greys
-        #             # if route is grey: any combination of 2 cards
-
-        #             #it can only be combined with a wild card, i.e green and purple cannot be combined
-        #             possibleCombinations = player.getCombinations(edge['weight'], color)
-
-        #             #check for multiple color violations
-        #             validCombinations = []
-        #             for combination in possibleCombinations:
-        #                 base_color = None
-        #                 valid = True
-        #                 for color in combination:
-        #                     if base_color == None and color != 'wild':
-        #                         base_color = color
-        #                     if base_color != color and color != 'wild':
-        #                         valid = False
-        #                 if valid:
-        #                     validCombinations.append(combination)
-                  
-
-                        
-
-        #             if len(validCombinations) > 0:
-        #                 moves.append({
-        #                     "move": "train",
-        #                     "edge": edge,
-        #                     "color": color,
-        #                     "possible_cards": validCombinations
-        #                 })
-        # # pick up destination cards
-
-        # #pick up train cards
-        # for card in self.deck.getDrawPile():
-        #     moves.append({
-        #         "move": "card",
-        #         "card": card,
-        #     })
-        
-        # #can also draw from the facedown pile
-        # #moves.append({
-        # #        "move": "card",
-        # #        "card": self.deck.pickFaceDown(),
-        # #})
-
-        # #pick up more destination cards
-        # tickets = self.deck.dealTickets(self.numTicketsDealt)
-        # for ticket in tickets:
-        #     moves.append({
-        #         "move": "ticket",
-        #         "ticket": ticket,
-        #     })
-
-        #     #readd the tickets back
-        #     self.deck.tickets.append(ticket)
-        # return moves
-
         moves = []
 
-        
+        # 1. Claiming a Train Route
         for edge in self.board.getEdgesData():
             city1, city2 = edge["edge"]
             for color in edge["edgeColors"]:
@@ -179,45 +130,38 @@ class Game(object):
                             "possible_cards": validCombinations
                         })
 
-        #pick up train cards
-        for card in self.deck.getDrawPile():
+        # 2. Drawing Train Cards
+        if self.deck.getDrawPile() or self.deck.cards:
             moves.append({
-                "move": "card",
-                "card": card,
-            })
-        
-        #can also draw from the facedown pile
-        #moves.append({
-        #        "move": "card",
-        #        "card": self.deck.pickFaceDown(),
-        #})
-
-        #pick up more destination cards
-        tickets = self.deck.dealTickets(self.numTicketsDealt)
-        for ticket in tickets:
-            moves.append({
-                "move": "ticket",
-                "ticket": ticket,
+                "move": "cards",
             })
 
-            #readd the tickets back
-            self.deck.tickets.append(ticket)
+        # 3. Draw Route Tickets
+        if self.deck.tickets:
+            moves.append({
+                "move": "tickets",
+            })
+
         return moves
 
             
     def getObservations(self, player):
         #get all edges on the board
-        edges = self.board.iterEdges()
-        
+        edges = list(self.board.iterEdges())
 
         #get the player's hand
         hand = player.getHand()
 
         #get the face up cards
-        draw_pile = self.deck.getDrawPile()
+        draw_pile = list(self.deck.getDrawPile())
+
+        face_down = list(self.deck.cards)
 
         #get the player's destination tickets
         destination_tickets = player.tickets
+
+        ticket_deck = list(self.deck.tickets)
+        ticket_discard = list(self.deck.ticketDiscardPile)
 
         #get other player information
         player_info = {}
@@ -232,23 +176,93 @@ class Game(object):
             'edges' : edges,
             'player' : player,
             'draw_pile' : draw_pile,
+            'face_down' : face_down,
+            'ticket_deck' : ticket_deck,
+            'ticket_discard' : ticket_discard,
             'public_player_info' : player_info,
         }
 
-    
     def getReward(self, player):
+        score = 0.0
+        # Current route points
+        score += player.getPoints() + self.viewPlayerTicketsScore(player)
+
+        # pb = player.playerBoard
+        #
+        # comp_bonus = 0.0
+        # for comp in networkx.connected_components(pb.G):
+        #     sub = pb.G.subgraph(comp)
+        #     length = sum(data.get("weight", 1) for (_, _, data) in sub.edges(data=True))
+        #     comp_bonus += (length ** 1.5)
+        # score += 0.3 * comp_bonus
+
+        # ticket_bonus = 0.0
+        # for (ticket, kept) in player.tickets.items():
+        #     if not kept:
+        #         continue
+
+        #     path_edges = self.ticket_paths.get(ticket, [])
+        #     if not path_edges:
+        #         continue
+
+        #     total_len = 0.0
+        #     built_len = 0.0
+
+        #     for (u, v) in path_edges:
+        #         # look up weight on *full* board
+        #         w = self.board.getEdgeWeight(u, v)
+        #         total_len += w
+        #         if pb.hasEdge(u, v) or pb.hasEdge(v, u):   # be safe with direction
+        #             built_len += w
+
+        #     if total_len == 0:
+        #         continue
+
+        #     fraction = built_len / total_len
+        #     _, _, ticket_value = ticket
+
+        #     # Completed ticket ≈ full value
+        #     ticket_bonus += ticket_value * fraction
+
+        # score += ticket_bonus
+
+        # # Hand potential
+        # hand = player.getHand()
+        # hand_bonus = 0.0
+
+        # desired_colors = collections.Counter()
+        # for (ticket, kept) in player.tickets.items():
+        #     if not kept:
+        #         continue
+        #     desired_colors += self.ticket_colors.get(ticket, collections.Counter())
+        
+        # for color, need in desired_colors.items():
+        #     have = hand.get(color, 0)
+        #     useful = min(have, need)
+        #     hand_bonus += 0.4 * (useful ** 2)
+
+        # hand_bonus += 0.3 * hand.get("wild", 0)
+
+        # score += hand_bonus
+
+        # Long networks
+        total_edges = len(list(player.playerBoard.G.edges()))
+        score += 0.5 * total_edges
+
+        # Penalty for tickets
+        num_kept = sum(1 for t, kept in player.tickets.items() if kept)
+        score -= 0.5 * num_kept
+
+        return score
+    
+    def getFinalScore(self, player):
         curr = player.getPoints() + self.viewPlayerTicketsScore(player)
         if player == self.viewLongestPath():
             curr += self.pointsForLongestRoute
         return curr
 
-    def getRewardFast(self, player):
-        return player.getPoints() + self.viewPlayerTicketsScore(player)
-    
     def printSepLine(self, toPrint):
         print(toPrint)
-    
-    
             
     def advanceOnePlayer(self):
         """Updates self.posToMove"""
@@ -811,7 +825,8 @@ def playTTR():
         numPlayers = 2
     
     aiCount = input("How many players are AI?")
-    while int(aiCount) not in range(0,int(numPlayers))  and count < 5:
+    # Changes to +1 to have just AI play
+    while int(aiCount) not in range(0,int(numPlayers)+1)  and count < 5:
         if aiCount == 'exit': return "Thanks for playing!"
         numPlayers = input(f"Please enter a number between 0 and {numPlayers}: ")
         count += 1

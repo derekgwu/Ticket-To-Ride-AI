@@ -148,8 +148,8 @@ class Player(object):
         tickets_copy = copy.deepcopy(self.getTickets())
         board_ref = copy.deepcopy(self.playerBoard)
         position = copy.deepcopy(self.playerPosition)
-        num_trains = self.getNumTrains()
-        ai_flag = self.isAi()
+        num_trains = copy.deepcopy(self.getNumTrains())
+        ai_flag = copy.deepcopy(self.isAi())
 
         return Player (
             hand_copy,
