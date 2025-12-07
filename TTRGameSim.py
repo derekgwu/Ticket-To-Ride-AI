@@ -183,77 +183,43 @@ class Game(object):
         }
 
     def getReward(self, player):
-        score = 0.0
-        # Current route points
-        score += player.getPoints() + self.viewPlayerTicketsScore(player)
+        base = player.getPoints() + self.viewPlayerTicketsScore(player)
 
-        # pb = player.playerBoard
-        #
-        # comp_bonus = 0.0
-        # for comp in networkx.connected_components(pb.G):
-        #     sub = pb.G.subgraph(comp)
-        #     length = sum(data.get("weight", 1) for (_, _, data) in sub.edges(data=True))
-        #     comp_bonus += (length ** 1.5)
-        # score += 0.3 * comp_bonus
+        if player == self.viewLongestPath():
+            base += self.pointsForLongestRoute
 
-        # ticket_bonus = 0.0
-        # for (ticket, kept) in player.tickets.items():
-        #     if not kept:
-        #         continue
-
-        #     path_edges = self.ticket_paths.get(ticket, [])
-        #     if not path_edges:
-        #         continue
-
-        #     total_len = 0.0
-        #     built_len = 0.0
-
-        #     for (u, v) in path_edges:
-        #         # look up weight on *full* board
-        #         w = self.board.getEdgeWeight(u, v)
-        #         total_len += w
-        #         if pb.hasEdge(u, v) or pb.hasEdge(v, u):   # be safe with direction
-        #             built_len += w
-
-        #     if total_len == 0:
-        #         continue
-
-        #     fraction = built_len / total_len
-        #     _, _, ticket_value = ticket
-
-        #     # Completed ticket ≈ full value
-        #     ticket_bonus += ticket_value * fraction
-
-        # score += ticket_bonus
-
-        # # Hand potential
-        # hand = player.getHand()
-        # hand_bonus = 0.0
-
-        # desired_colors = collections.Counter()
-        # for (ticket, kept) in player.tickets.items():
-        #     if not kept:
-        #         continue
-        #     desired_colors += self.ticket_colors.get(ticket, collections.Counter())
+        progress = self.ticket_progress_score(player)
+        route_len = self.route_length_score(player)
         
-        # for color, need in desired_colors.items():
-        #     have = hand.get(color, 0)
-        #     useful = min(have, need)
-        #     hand_bonus += 0.4 * (useful ** 2)
+        return (
+            base
+            + 0.5 * progress
+            + 0.2 * route_len
+        )
+    
+    # Ticket progress bonus:
+    # reward partial progress on tickets
+    def ticket_progress_score(self, player):
+        total = 0.0
+        for ticket in player.tickets:
+            path_edges = self.ticket_paths.get(ticket)
+            if not path_edges:
+                continue
+            claimed = 0
+            for (c1, c2) in path_edges:
+                if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
+                    claimed += 1
+            frac = claimed / len(path_edges)
+            total += ticket[2] * frac
+        return total 
 
-        # hand_bonus += 0.3 * hand.get("wild", 0)
-
-        # score += hand_bonus
-
-        # Long networks
-        total_edges = len(list(player.playerBoard.G.edges()))
-        score += 0.5 * total_edges
-
-        # Penalty for tickets
-        num_kept = sum(1 for t, kept in player.tickets.items() if kept)
-        score -= 0.5 * num_kept
-
-        return score
+    # Route-length bonus:
+    # small bonus for having many trains on the board
+    def route_length_score(self, player):
+        total = 0
+        for (c1, c2, data) in player.playerBoard.iterEdges():
+            total += data.get('weight', 1)
+        return total
     
     def getFinalScore(self, player):
         curr = player.getPoints() + self.viewPlayerTicketsScore(player)

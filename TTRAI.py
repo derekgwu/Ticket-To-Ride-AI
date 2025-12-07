@@ -123,7 +123,7 @@ class AI:
             return reward
 
         # Selection - Move down the existing tree
-        # TODO: Computer UCT value for each next action, pick action with highest UCT
+        # Use UCT score to find best path
         best_child = None
         best_uct = float('-inf')
 
