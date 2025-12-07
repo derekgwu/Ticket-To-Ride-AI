@@ -152,8 +152,6 @@ class Game(object):
 
         moves = []
 
-        if self.checkEndingCondition(player):
-            return
         
         for edge in self.board.getEdgesData():
             city1, city2 = edge["edge"]
@@ -418,7 +416,12 @@ class Game(object):
         player: player object
         """
         if player.isAi():
-            self.aiModel.monteCarlo(player, 10)
+            action = self.aiModel.monteCarlo(player, 10)
+            if action is not None:
+                self.aiModel.apply_action(player, action)
+            else:
+                print("AI found no legal action.")
+            return "Move complete"
         #print ("------------------------------")
         #print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
         #print(len(self.getLegalActions(player)))
