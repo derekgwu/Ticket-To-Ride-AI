@@ -183,23 +183,14 @@ class Game(object):
         }
 
     def getReward(self, player):
-        base = player.getPoints() + self.viewPlayerTicketsScore(player)
+        score = player.getPoints()
+        # base += self.viewPlayerTicketsScore(player)
 
         if player == self.viewLongestPath():
-            base += self.pointsForLongestRoute
-
-        progress = self.ticket_progress_score(player)
-        route_len = self.route_length_score(player)
+            score += self.pointsForLongestRoute
         
-        return (
-            base
-            + 0.5 * progress
-            + 0.2 * route_len
-        )
-    
-    # Ticket progress bonus:
-    # reward partial progress on tickets
-    def ticket_progress_score(self, player):
+        # Ticket progress bonus:
+        # reward partial progress on tickets
         total = 0.0
         for ticket in player.tickets:
             path_edges = self.ticket_paths.get(ticket)
@@ -211,15 +202,16 @@ class Game(object):
                     claimed += 1
             frac = claimed / len(path_edges)
             total += ticket[2] * frac
-        return total 
+        score += total
 
-    # Route-length bonus:
-    # small bonus for having many trains on the board
-    def route_length_score(self, player):
+        # Route-length bonus:
+        # small bonus for having many trains on the board
         total = 0
         for (c1, c2, data) in player.playerBoard.iterEdges():
             total += data.get('weight', 1)
-        return total
+        score += total
+        
+        return score
     
     def getFinalScore(self, player):
         curr = player.getPoints() + self.viewPlayerTicketsScore(player)
