@@ -72,13 +72,15 @@ class AI:
             self.simulate(state, depth, self.root)
         
         #do a 1-layer bfs to find the best score move
-        curr_max = -99999
-        curr_action = None
-        for child in self.root.children:
-            if child.value > curr_max:
-                curr_action = child.move
-        
-        print(f"the best action is {curr_action}")
+        if not self.root.children:
+            #no legal actions
+            return None
+
+        best_child = max(self.root.children, key=lambda c: c.value)
+        best_action = best_child.move
+
+        print(f"the best action is {best_action}")
+        return best_action
 
     def simulate(self,state, depth,root):
         #reached depth cutoff
@@ -134,6 +136,9 @@ class AI:
 
         #generate a random action for them
         next_actions = self.game.getLegalActions(next_player)
+        #no more legal moves
+        if not next_actions:
+            return self.game.getReward(playerToTrack)
         action = random.choice(next_actions)
         state = self.game.getObservations(next_player)
 
@@ -194,3 +199,50 @@ class AI:
             'draw_pile' : draw_pile,
             'public_player_info' : player_info,
         }
+    
+    def apply_action(self, player, action):
+        #train move
+        if action['move'] == 'train':
+            edge = action['edge']
+            city1, city2 = edge['edge']
+            routeDist = edge['weight']
+
+            #choose a card combination
+            combo = random.choice(action['possible_cards'])
+            #pick a non wild color for the track
+            color_choice = 'wild'  # default
+            for c in combo.keys():
+                if c != 'wild':
+                    color_choice = c
+                    break
+
+            #claim route on player board
+            player.playerBoard.addEdge(city1, city2, routeDist, color_choice)
+
+            #remove route from main board
+            self.game.board.removeEdge(city1, city2, color_choice)
+
+            #add points
+            player.addPoints(self.game.routeValues[routeDist])
+
+            #remove cards from hand and add to discard
+            for c, count in combo.items():
+                player.removeCardsFromHand(c, count)
+                self.game.deck.addToDiscard([c] * count)
+
+            #remove trains
+            player.playNumTrains(routeDist)
+
+        #draw card move
+        elif action['move'] == 'card':
+            card = action['card']
+            if card in self.game.deck.getDrawPile():
+                player.addCardToHand(self.game.deck.pickFaceUpCard(card))
+            else:
+                #draw from face-down pile if all else
+                player.addCardToHand(self.game.deck.pickFaceDown())
+
+        #ticket move
+        elif action['move'] == 'ticket':
+            ticket = action['ticket']
+            player.addTicket(ticket)
