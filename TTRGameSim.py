@@ -615,10 +615,14 @@ class Game(object):
             print(f"{player.name}'s Destination Tickets: ")
             TTRPrint.formatTicketHandPrint(player.getTickets())
             print(f"{player.name}'s Claimed Routes:")
-            for edge in player.playerBoard.iterEdges():
-                city1, city2 = edge
-                length = player.playerBoard.getEdgeWeight(city1, city2)
-                print(f"  {city1} -- {city2}  (Length: {length})")
+            for city1, city2, data in player.playerBoard.iterEdges():
+                length = data.get("weight", "?")
+                colors = data.get("edgeColors", [])
+                if colors:
+                    colors_str = "/".join(colors)
+                    print(f"  {city1} -- {city2}  (Length: {length}, Color(s): {colors_str})")
+                else:
+                    print(f"  {city1} -- {city2}  (Length: {length})")
             print(f"{player.name}'s Postgame Data: ")
             other_info = [[player.__dict__['numTrains'], player.__dict__['points']]]
             TTRPrint.formatPrintOtherPostGameData(other_info)
