@@ -7,8 +7,12 @@
 # Blog:
 
 ## Problem Statement
+Ticket to Ride (TTR) is a multiplayer board game where players collect colored train cards and claim routes on a map of North America to complete destination tickets. Claiming routes and completing destination tickets leads to a score increase and are the most desirable actions throughout the game. Each turn a player has the option of taking any of the 3 options: drawing colored route cards, drawing new destination tickets or claiming an existing route. While these options seem simple, its difficult to coordinate which of the three actions is best for the current move at hand. Each player is unaware of the exact cards opponents hold, which tickets they are trying to construct and any potential routes that may be blocked in the future.
+
+Therefore this makes the game a stochastic sequential decision problem. For an AI controlled player going against other users, must select one action that maximizes its eventual score by the end of the game and consider long term planning and outcomes. The shuffled decks, random ticket draws and other players actions result in a stochastic environment and given the opponent hands and ticket sets are hidden the resulting statespace is only partially observable. The resulting goal of this project is to design and implement an AI agent that can play Ticket to Ride using only a model of the rules and live search for predicted outcomes. Each round the agent must choose a single move that will maximize the final expected score according to the game rules.
 
 ## Related solutions to similar problems
+Given the incredibly large number of possible moves, outcomes and steps the structure of this problem is similar to other board games such as Go, Chess or Catan where there are an extreme number of branching factors, unecertainty about opponents future actions, and an inability to "solve" the game as has been done in simpler game such as tic-tac-toe. In many of these games, using Monte Carlo Tree Search seems like the only valid approach because of its ability to handle extremely large numbers of possible moves by randomly trying out sequences of moves instead of exhaustively exploring all possibilities. MCTS has been applied successfully to Go, Chess, Checkers and other games with large state spaces. Ticket to Ride shares the same challenges that the exact value of any given move is difficult to perfectly calculate, but we can roll out semi simulated games to estimate each moves potential value.
 
 ## State space, actions, transitions, and observations
 
@@ -151,3 +155,6 @@ $$o_i = \big( B,\ F_{\text{train}},\ H_k,\ T_k,\ R_k,\ P_k)$$
 
 
 ## Solution method
+
+
+
