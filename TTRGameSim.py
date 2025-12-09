@@ -394,34 +394,44 @@ class Game(object):
             'public_player_info' : player_info,
         }
 
-    def getReward(self, player):
-        score = player.getPoints() 
+    def getReward(self, player, incentive="tickets"):
 
+        if incentive == "random":
+            return 0
+
+        score = player.getPoints() 
         if player == self.viewLongestPath():
             score += self.pointsForLongestRoute
 
-        # Ticket progress bonus
 
-        total = 0.0
-        for ticket in player.tickets.keys():
-            # for all unclaimed tickets
-            if player.tickets[ticket] == False:
-                path_edges = self.ticket_paths.get(ticket) # get the shortest path between the two citiyes
-                #error case
-                if not path_edges:
-                    continue
-                claimed = 0
-
-                for (c1, c2, value) in path_edges:
-                    if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
-                        claimed += 1
-                if not self.endGame:
-                    frac = claimed / len(path_edges)
-                    total += ticket[2] * frac * 1/2
+        if incentive == "tickets":
+            for ticket in player.tickets.keys():
+                if player.tickets[ticket] == True:
+                    score += 2* ticket[2]
                 else:
-                    total -= ticket[2]
+                    score-=ticket[2]
+            return score
+        else:
+            total = 0.0
+            for ticket in player.tickets.keys():
+                # for all unclaimed tickets
+                if player.tickets[ticket] == False:
+                    path_edges = self.ticket_paths.get(ticket) # get the shortest path between the two citiyes
+                    #error case
+                    if not path_edges:
+                        continue
+                    claimed = 0
 
-        score += total  
+                    for (c1, c2, value) in path_edges:
+                        if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
+                            claimed += 1
+                    if not self.endGame:
+                        frac = claimed / len(path_edges)
+                        total += ticket[2] * frac
+                    else:
+                        total -= ticket[2]
+
+            score += total  
 
 
         return score
