@@ -335,6 +335,22 @@ class Board(object):
                         weight = 6, 
                         edgeColors = ['red'])
         
+        self.edges_data = []
+        self.edge_info = {}
+
+        # Precompute board edges
+        for city1, city2, data in self.G.edges(data=True):
+            edge = (city1, city2)
+            weight = data["weight"]
+            colors = data["edgeColors"]
+            info = {
+                "edge": edge,
+                "weight": weight,
+                "edgeColors": colors,
+            }
+            self.edges_data.append(info)
+            self.edge_info[edge] = info
+            self.edge_info[(city2, city1)] = info
     
         #create a copy of the board to store the original state of the board
         self.copyBoard = self.G.copy()
@@ -357,7 +373,7 @@ class Board(object):
         """returns True an edge exists between city1, city2.  False otherwise
         city1, city2: string
         """
-        return self.G.has_edge(city1, city2)
+        return (city1, city2) in self.edge_info
 
     def removeEdge(self, city1, city2, edgeColor):
         """remove the edge between two cities that's colored edgeColor
@@ -396,7 +412,7 @@ class Board(object):
         """returns the edgeColors of edge
         city1, city2: string
         """
-        return self.G.get_edge_data(city1, city2)['edgeColors']
+        return self.edge_info[(city1, city2)]['edgeColors']
 
 
     def getEdgesData(self):
@@ -405,23 +421,13 @@ class Board(object):
         "weight" = int
         "edgeColors" = ['color1', 'color2']
         """
-        edges = []
-        
-        for edge in self.getEdges():
-            result = {}
-            result["edge"] = edge
-            city1,city2 = edge
-            result["weight"] = self.getEdgeWeight(city1, city2)
-            result["edgeColors"] = self.getEdgeColors(city1, city2)
-            edges.append(result)
-        
-        return edges
+        return self.edges_data
 
     def getEdgeWeight(self, city1, city2):
         """returns the weight of the edge (i.e. the distance between two cities)
         city1, city2: string
         """
-        return self.G.get_edge_data(city1, city2)['weight']
+        return self.edge_info[(city1, city2)]['weight']
     
     def getPathWeight(self, city1, city2):
         """returns the weight of the shortest path between city1, city2
@@ -450,6 +456,13 @@ class Board(object):
         """
         return nx.has_path(self.G, city1, city2)
     
+    def getShortestPath(self, city1, city2):
+        path = nx.shortest_path(self.G, city1, city2)
+
+        edge_path = [(path[i], path[i+1], self.getEdgeWeight(path[i], path[i+1])) for i in range(len(path)-1)]
+
+        return edge_path
+    
     def iterEdges(self):
         """returns an interator over all edges and edge data"""
         return self.G.edges(data = True)
@@ -465,6 +478,17 @@ class PlayerBoard(Board):
         routeDist          : int
         """
         self.G.add_edge(city1, city2, weight = routeDist, edgeColors = [color])
+
+    def hasEdge(self, city1, city2):
+        return self.G.has_edge(city1, city2)
+
+    def getEdgeWeight(self, city1, city2):
+        """Use the player's own claimed-edge graph."""
+        return self.G.get_edge_data(city1, city2)['weight']
+
+    def getAdjCities(self, city1):
+        """Adjacent cities in the player's claimed graph."""
+        return [x[1] for x in self.G.edges(city1)]
 
     def longestPath(self, start):
         """returns a tuple: (len longestPath, tuple of cities along longestPath)

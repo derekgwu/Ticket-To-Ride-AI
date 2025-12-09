@@ -2,6 +2,7 @@ import collections
 from itertools import combinations
 from collections import Counter
 from TTRAI import AI
+import copy
 
 class Player(object):
     
@@ -11,7 +12,8 @@ class Player(object):
                  playerBoard, 
                  playerPosition, 
                  numTrains,
-                 ai
+                 ai,
+                 reward=None
                  ):
         """orderNumber: int
         startingHand: list
@@ -34,6 +36,7 @@ class Player(object):
         self.numTrains      = numTrains
         self.points         = 0
         self.playerPosition = playerPosition
+        self.reward = reward
 
 
         self.pendingTickets = []
@@ -122,7 +125,7 @@ class Player(object):
         return
 
     # Get colors
-    def getCombinations(self,weight, color):
+    def getCombinations(self, weight, color):
         possibleCombinations = []
         wilds = self.hand.get("wild") 
 
@@ -151,7 +154,23 @@ class Player(object):
                 
         return possibleCombinations
 
+    def clone_for_sim(self):
+        # To reduce processing overhead for AI simulations
 
-    
-        
-        
+        hand_copy = copy.deepcopy(self.getHand())
+        tickets_copy = copy.deepcopy(self.getTickets())
+        board_ref = copy.deepcopy(self.playerBoard)
+        position = copy.deepcopy(self.playerPosition)
+        num_trains = copy.deepcopy(self.getNumTrains())
+        ai_flag = copy.deepcopy(self.isAi())
+        reward = copy.deepcopy(self.reward)
+
+        return Player (
+            hand_copy,
+            tickets_copy,
+            board_ref,
+            position,
+            num_trains,
+            ai_flag,
+            reward
+        )
