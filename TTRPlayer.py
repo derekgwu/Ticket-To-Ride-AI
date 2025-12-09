@@ -12,7 +12,8 @@ class Player(object):
                  playerBoard, 
                  playerPosition, 
                  numTrains,
-                 ai
+                 ai,
+                 reward=None
                  ):
         """orderNumber: int
         startingHand: list
@@ -35,6 +36,7 @@ class Player(object):
         self.numTrains      = numTrains
         self.points         = 0
         self.playerPosition = playerPosition
+        self.reward = reward
 
 
         self.pendingTickets = []

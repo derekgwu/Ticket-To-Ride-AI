@@ -18,7 +18,7 @@ import networkx
 import TTRPrint
 
 class Game(object):
-    def __init__(self, numPlayers, numAi):
+    def __init__(self, numPlayers, numAi, rewards):
         self.sizeDrawPile          = 5
         self.numTicketsDealt       = 3
         self.sizeStartingHand      = 4
@@ -45,6 +45,8 @@ class Game(object):
 
         #point values for tracks of different lengths
         self.routeValues           = {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
+
+        self.rewardMap = {0:"tickets", 1:"progress", 2: "random"}
 
         for position in range(numPlayers):
             startingHand     = self.deck.dealCards(self.sizeStartingHand)
@@ -75,10 +77,15 @@ class Game(object):
                                                 playerBoard, 
                                                 position, 
                                                 self.startingNumOfTrains,
-                                                True
+                                                True,
+                                                self.rewardMap[rewards[position]]
                                                 )                          
             self.players.append(player)
 
+
+        for player in self.players:
+            if player.isAi():
+                print(player.reward)
         # Precompute best paths for every ticket as heuristic
         self.ticket_paths = {}
         self.ticket_colors = {}
@@ -394,9 +401,8 @@ class Game(object):
             'public_player_info' : player_info,
         }
 
-    def getReward(self, player, incentive="tickets"):
-
-        if incentive == "random":
+    def getReward(self, player):
+        if player.reward == "random":
             return 0
 
         score = player.getPoints() 
@@ -404,14 +410,14 @@ class Game(object):
             score += self.pointsForLongestRoute
 
 
-        if incentive == "tickets":
+        if player.reward == "tickets":
             for ticket in player.tickets.keys():
                 if player.tickets[ticket] == True:
                     score += 2* ticket[2]
                 else:
                     score-=ticket[2]
             return score
-        else:
+        elif player.reward == "progress":
             total = 0.0
             for ticket in player.tickets.keys():
                 # for all unclaimed tickets
@@ -1053,8 +1059,20 @@ def playTTR():
         if aiCount == 'exit': return "Thanks for playing!"
         numPlayers = input(f"Please enter a number between 0 and {numPlayers}: ")
         count += 1
-        
-    game = Game(int(numPlayers) - int(aiCount), int(aiCount))    
+    
+    aiCount = int(aiCount)
+    reward_type = []
+
+    # Ask incentive for each AI
+    for i in range(aiCount):
+        while True:
+            choice = input(f"Select reward function for AI {i} (0: tickets, 1: progress, 2: random): ")
+            if choice in ['0', '1', '2']:
+                reward_type.append(int(choice))
+                break
+            else:
+                print("Invalid input. Please enter 0, 1, or 2.")
+    game = Game(int(numPlayers) - int(aiCount), int(aiCount), reward_type)    
     
     game.initialize()
     

@@ -101,7 +101,7 @@ class AI:
         # Terminal depth or no moves
         legal_actions = self.game.getLegalActions(state['player'])
         if depth == 0 or not legal_actions:
-            reward = self.game.getReward(state['player'])
+            reward = self.game.getReward(state['player'] )
             self.backpropagate(node, reward)
             return reward
 
