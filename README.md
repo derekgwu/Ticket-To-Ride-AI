@@ -14,6 +14,7 @@ Therefore this makes the game a stochastic sequential decision problem. For an A
 ## Related solutions to similar problems
 Given the incredibly large number of possible moves, outcomes and steps the structure of this problem is similar to other board games such as Go, Chess or Catan where there are an extreme number of branching factors, unecertainty about opponents future actions, and an inability to "solve" the game as has been done in simpler game such as tic-tac-toe. In many of these games, using Monte Carlo Tree Search seems like the only valid approach because of its ability to handle extremely large numbers of possible moves by randomly trying out sequences of moves instead of exhaustively exploring all possibilities. MCTS has been applied successfully to Go, Chess, Checkers and other games with large state spaces. Ticket to Ride shares the same challenges that the exact value of any given move is difficult to perfectly calculate, but we can roll out semi simulated games to estimate each moves potential value.
 
+There are some implementations already with other basic algorithms such as a [regular breadth first search](https://github.com/ss2cp/AI-TicketToRide) or [reinforcement learning](https://github.com/mcandocia/tickets_ai). We choose to do Monte Carlo Tree Search as a different approach that made the most sense for this game with a large state space.
 ## State space, actions, transitions, and observations
 
 ### Natural Language Description
@@ -189,7 +190,7 @@ We explore a number of nodes and once the simulation reaches the depth limit it 
 Each rollout simulates a random continuation of the game until the defined depth limit is reached. Each simulation has players take turns in sequence where the active player’s legal moves are retrieved, one legal action is sampled at random and applied to generate the next state. Finally, it returns a expected value of the resulting state that is computed by the reward function to demonstrate the success of that move.
 
 #### Reward Function
-
+The reward function returns the current score of the player at that current state. The score consists of how many trains they have placed on the board, bonus points for the longest train path on the board, bonus or deduction points for completed and incompleted tickets, and points for constructing longer paths. 
 #### Backpropagation
 
 After each simulation the visit count of each node along the path is incremented and the node’s value is increased by the reward returned from the simulation. As you run more simulations and accumulate increased visits and expected values we average the value per total number of visits to get the estimated reward cost to pass up the tree. The AI obviously chooses the path with the best average value and takes that move to continue the game.
