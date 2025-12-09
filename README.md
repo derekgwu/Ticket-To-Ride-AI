@@ -96,13 +96,14 @@ This model shows the probability of moving from state \(s\) to state \(s'\) afte
 
 #### 1. Draw Train Card
 
-There are two cases:
+During a draw train card move, a player selects two train cards. If the first card selected is a wild, then a player does not draw a second card. In between selecting face-up cards, the train card is replaced by a card from the deck, making drawing the first card and the second card independent subactions. 
+When selecting a card there are two cases:
 
 * ##### (a) Drawing a card thats face up (Deterministic)
 
 $$T(s' \mid s, \text{drawCard}) = 1$$
 
-This is for the one successor state \(s'\) in which the selected face up card is added to the player's hand and a new card from the deck replaces it in the face up row.
+This is for the one successor state \(s'\) in which the selected face-up card is added to the player's hand and a new card from the deck replaces it in the face-up row. 
 
 * ##### (b) Drawing from the deck (Stochastic)
 
@@ -118,19 +119,17 @@ Claiming a track \(e\) will produce one state since the player is explicitly cho
 
 $$T(s' \mid s, \text{placeTrain}(e)) = 1$$
 
-Then the colored cards used are removed from the players hand, $P_{i_T}$. The remaining train pieces are removed from the players hand, $P_{i_{TR}}$, and the overall score is updated.
+Then the colored cards used are removed from the player's hand, $P_{i_T}$. The remaining train pieces are removed from the player's hand, $P_{i_{TR}}$, and the overall score is updated.
 
-$e$ is then updated in $B$ with a new color, $c(e)$, representing the color the player chose to color the route.  
-
+$e$ is then updated in $B$ with a new color, $c(e)$, representing the color the player chose to color the route.  The action includes ("placeTrain", edge, cards from hand). The player declares they are taking a train, the train they want to take, and the combination of trains in their hand that they want to use. Wild trains/edges can be made up of any color, so the possible transitions explode because all combinations of valid length are possible.
 
 #### 3. Draw Destination Tickets (Stochastic)
 
-When a player chooses to draw tickets they randomly choose 3 distinct tickets from the destination deck. Since the draw is made without replacement and all at once any possible combination of train cards is equally likely to one another. 
+When a player chooses to draw tickets, they randomly choose 3 distinct tickets from the destination deck. Since the draw is made without replacement and all at once, any possible combination of train cards is equally likely to one another. 
 
 $$T(s' \mid s, \text{drawDestinationTicket}) = \frac{1}{\binom{|D_{\text{dest}}|}{3}}$$
 
-After drawing the mandatory 3 cards the player gets to choose which tickets to keep and which to discard. They must keep at least one and at most 3 of the available options.
-
+After drawing the mandatory 3 cards, the player gets to choose which tickets to keep and which to discard. They must keep at least one and at most 3 of the available options.
 
 
 ### Observability
