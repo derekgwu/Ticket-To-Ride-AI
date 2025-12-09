@@ -86,7 +86,7 @@ class AI:
         if(best_action["move"] == "tickets"):
             print(f"Current Destination Tickets:  {player.tickets}" )
         elif(best_action["move"] == "cards"):
-            print(f"Current Destination Tickets: {player.hand}")
+            print(f"Current Cards: {player.hand}")
         print(f"current score {best_child.value}")
         return best_action
 
@@ -118,7 +118,7 @@ class AI:
 
             # Simulate the action
             new_state = self.makeNextMove(state, action)
-            new_node = MTNode(new_state, action, None)
+            new_node = MTNode(new_state, action, node)
             node.children.append(new_node)
             
             # Random rollout to terminal
@@ -328,35 +328,7 @@ class AI:
     def apply_action(self, player, action):
         # 1. Claim a Train Route
         if action['move'] == 'train':
-            edge = action['edge']
-            city1, city2 = edge['edge']
-            routeDist = edge['weight']
-
-            #choose a card combination
-            combo = random.choice(action['possible_cards'])
-            #pick a non wild color for the track
-            color_choice = 'wild'  # default
-            for c in combo.keys():
-                if c != 'wild':
-                    color_choice = c
-                    break
-
-            #claim route on player board
-            player.playerBoard.addEdge(city1, city2, routeDist, color_choice)
-
-            #remove route from main board
-            self.game.board.removeEdge(city1, city2, color_choice)
-
-            #add points
-            player.addPoints(self.game.routeValues[routeDist])
-
-            #remove cards from hand and add to discard
-            for c, count in combo.items():
-                player.removeCardsFromHand(c, count)
-                self.game.deck.addToDiscard([c] * count)
-
-            #remove trains
-            player.playNumTrains(routeDist)
+            self.apply_claim_route_real(player, action)
 
         # 2. Draw Train Cards
         elif action['move'] == 'cards':
@@ -366,6 +338,68 @@ class AI:
         elif action['move'] == 'tickets':
             self.apply_draw_tickets_turn_real(player)
 
+    def apply_claim_route_real(self, player, action):
+        edge = action['edge']
+        city1, city2 = edge['edge']
+        routeDist = edge['weight']
+        combos = action['possible_cards']
+
+        #choose a card combination
+        best = max(combos, key=lambda combo:self.evaluate_card_combo(player, edge, combo))
+        #pick a non wild color for the track
+        color_choice = 'wild'  # default
+        for c in best.keys():
+            if c != 'wild':
+                color_choice = c
+                break
+
+        #claim route on player board
+        player.playerBoard.addEdge(city1, city2, routeDist, color_choice)
+
+        #remove route from main board
+        self.game.board.removeEdge(city1, city2, color_choice)
+
+        #add points
+        player.addPoints(self.game.routeValues[routeDist])
+
+        #remove cards from hand and add to discard
+        for c, count in best.items():
+            player.removeCardsFromHand(c, count)
+            self.game.deck.addToDiscard([c] * count)
+
+        #remove trains
+        player.playNumTrains(routeDist)
+
+    def evaluate_card_combo(self, player, edge, combo):
+        hand = player.getHand()
+        route_len = edge["weight"]
+        score = 0.0
+
+        score += float(route_len)
+        wilds_used = combo.get("wild", 0) or 0
+        if wilds_used > 0:
+            score -= 2.0 * wilds_used
+
+        for color, count_used in combo.items():
+            if color == "wild":
+                continue
+            have_before = hand.get(color, 0)
+            have_after = have_before - count_used
+            if have_after < 0:
+                score -= 100.0
+                continue
+
+            if have_before > 0:
+                relative_cost = count_used / (have_before * 1e-6)
+                score -= 1.0 * relative_cost
+            else:
+                score -= 3.0
+
+        total_wilds_in_hand = hand.get("wild", 0)
+        wilds_left = total_wilds_in_hand - wilds_used
+        if wilds_left > 0:
+            score += 0.3 * wilds_left
+        return score
 
     def apply_draw_cards_turn_real(self, player):
         deck = self.game.deck

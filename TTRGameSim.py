@@ -46,7 +46,7 @@ class Game(object):
         #point values for tracks of different lengths
         self.routeValues           = {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
 
-        self.rewardMap = {0:"tickets", 1:"progress", 2: "random"}
+        self.rewardMap = {0:"tickets", 1:"route", 2: "random"}
 
         for position in range(numPlayers):
             startingHand     = self.deck.dealCards(self.sizeStartingHand)
@@ -409,36 +409,41 @@ class Game(object):
         if player == self.viewLongestPath():
             score += self.pointsForLongestRoute
 
-
         if player.reward == "tickets":
-            for ticket in player.tickets.keys():
-                if player.tickets[ticket] == True:
-                    score += 2* ticket[2]
+            ticket_bonus = 0.0
+            for ticket, completed in player.tickets.items():
+                city1, city2, val = ticket
+
+                path_nodes = Game.ticket_paths.get(ticket)
+                if not path_nodes:
+                    continue
+
+                edges = list(zip(path_nodes, path_nodes[1:]))
+                claimed = 0
+                for (c1, c2) in edges:
+                    if (player.playerBoard.hasEdge(c1, c2)) or player.playerBoard.hasEdge(c2, c1):
+                        claimed += 1
+
+                frac = claimed / len(edges)
+
+                if completed:
+                    ticket_bonus += val * 2
                 else:
-                    score-=ticket[2]
-            return score
-        elif player.reward == "progress":
-            total = 0.0
-            for ticket in player.tickets.keys():
-                # for all unclaimed tickets
-                if player.tickets[ticket] == False:
-                    path_edges = self.ticket_paths.get(ticket) # get the shortest path between the two citiyes
-                    #error case
-                    if not path_edges:
-                        continue
-                    claimed = 0
+                    ticket_bonus += val * frac
+            train_penalty = 0.1 * player.getNumTrains()
+            score += (ticket_bonus - train_penalty)
 
-                    for (c1, c2, value) in path_edges:
-                        if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
-                            claimed += 1
-                    if not self.endGame:
-                        frac = claimed / len(path_edges)
-                        total += ticket[2] * frac
-                    else:
-                        total -= ticket[2]
-
-            score += total  
-
+        elif player.reward == "route":
+            longest = 0
+            for city in player.playerBoard.getCities():
+                length, _ = player.playerBoard.longestPath(city)
+                if length > longest:
+                    longest = length
+            longest_bonus = longest * 1.5
+            ticket_val = self.viewPlayerTicketsScore(player) * 0.3
+            trains_used = self.startingNumOfTrains - player.getNumTrains()
+            use_bonus = trains_used * 0.5
+            score += (longest_bonus + ticket_val + use_bonus)
 
         return score
     
@@ -1066,7 +1071,7 @@ def playTTR():
     # Ask incentive for each AI
     for i in range(aiCount):
         while True:
-            choice = input(f"Select reward function for AI {i} (0: tickets, 1: progress, 2: random): ")
+            choice = input(f"Select reward function for AI {i} (0: tickets, 1: route, 2: random): ")
             if choice in ['0', '1', '2']:
                 reward_type.append(int(choice))
                 break
