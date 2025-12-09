@@ -38,7 +38,7 @@ class Game(object):
         self.posToMove             = 0
         self.aiModel               = TTRAI.AI(self, self.board)
 
-
+        self.endGame = False
         #card counting for observations
         #can do card couting on the face cards taken in other peoples hands
         self.cardCounting = {}
@@ -395,33 +395,34 @@ class Game(object):
 
     def getReward(self, player):
         score = player.getPoints()
-        # base += self.viewPlayerTicketsScore(player)
 
         if player == self.viewLongestPath():
             score += self.pointsForLongestRoute
-        
-        # Ticket progress bonus:
-        # reward partial progress on tickets
+
+        # Ticket progress bonus
         total = 0.0
         for ticket in player.tickets:
             path_edges = self.ticket_paths.get(ticket)
             if not path_edges:
                 continue
+
             claimed = 0
+            unclaimed = 0   
+
             for (c1, c2) in path_edges:
                 if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
                     claimed += 1
-            frac = claimed / len(path_edges)
-            total += ticket[2] * frac
+                else:
+                    unclaimed += 1
+            if not self.endGame:
+                frac = claimed / len(path_edges)
+                total += ticket[2] * frac
+            elif self.unclaimed > 0:
+                total -= ticket[2]
+        
+
         score += total
 
-        # Route-length bonus:
-        # small bonus for having many trains on the board
-        total = 0
-        for (c1, c2, data) in player.playerBoard.iterEdges():
-            total += data.get('weight', 1)
-        score += total
-        
         return score
     
     def getFinalScore(self, player):
@@ -1071,6 +1072,7 @@ def playTTR():
     print("\n This is the last round!  Everyone has one more turn! \n")
     
     for i in range(len(game.players)):
+        game.endGame = True
         print ("\n_________________NEW PLAYER'S TURN_________________ \n")
         print ("This is your LAST TURN " + str(player.getName()) + "! ")
         game.playTurn(player)

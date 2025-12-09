@@ -265,6 +265,7 @@ class AI:
         # Update state
         state['draw_pile'] = face_up
         state['face_down'] = face_down
+        
 
     def apply_draw_tickets_turn(self, state):
         player = state["player"]
