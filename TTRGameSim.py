@@ -413,12 +413,11 @@ class Game(object):
                     continue
                 claimed = 0
 
-                total_path = 0.0
                 for (c1, c2, value) in path_edges:
                     if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
                         claimed += 1
                 if not self.endGame:
-                    frac = claimed / total_path
+                    frac = claimed / len(path_edges)
                     total += ticket[2] * frac
                 else:
                     total -= ticket[2]
