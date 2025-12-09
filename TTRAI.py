@@ -296,7 +296,7 @@ class AI:
                 ticket_discard.append(t)
 
         state["ticket_deck"] = ticket_deck
-        state["ticket_discrd"] = ticket_discard
+        state["ticket_discard"] = ticket_discard
 
     def makeStateCopy(self, state):
         player = state['player'].clone_for_sim()

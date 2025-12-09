@@ -403,7 +403,7 @@ class Game(object):
 
     def getReward(self, player):
         if player.reward == "random":
-            return 0
+            return self.getFinalScore(player)
 
         score = player.getPoints() 
         if player == self.viewLongestPath():
@@ -414,7 +414,7 @@ class Game(object):
             for ticket, completed in player.tickets.items():
                 city1, city2, val = ticket
 
-                path_nodes = Game.ticket_paths.get(ticket)
+                path_nodes = self.ticket_paths.get(ticket)
                 if not path_nodes:
                     continue
 
@@ -614,6 +614,11 @@ class Game(object):
             TTRPrint.formatHandPrint(player.getHand())
             print(f"{player.name}'s Destination Tickets: ")
             TTRPrint.formatTicketHandPrint(player.getTickets())
+            print(f"{player.name}'s Claimed Routes:")
+            for edge in player.playerBoard.iterEdges():
+                city1, city2 = edge
+                length = player.playerBoard.getEdgeWeight(city1, city2)
+                print(f"  {city1} -- {city2}  (Length: {length})")
             print(f"{player.name}'s Postgame Data: ")
             other_info = [[player.__dict__['numTrains'], player.__dict__['points']]]
             TTRPrint.formatPrintOtherPostGameData(other_info)
