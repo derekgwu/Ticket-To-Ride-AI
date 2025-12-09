@@ -432,7 +432,6 @@ class Game(object):
                     ticket_bonus += val * frac
             train_penalty = 0.1 * player.getNumTrains()
             score += (ticket_bonus - train_penalty)
-
         elif player.reward == "route":
             longest = 0
             for city in player.playerBoard.getCities():

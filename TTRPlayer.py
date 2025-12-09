@@ -163,6 +163,7 @@ class Player(object):
         position = copy.deepcopy(self.playerPosition)
         num_trains = copy.deepcopy(self.getNumTrains())
         ai_flag = copy.deepcopy(self.isAi())
+        reward = copy.deepcopy(self.reward)
 
         return Player (
             hand_copy,
@@ -171,4 +172,5 @@ class Player(object):
             position,
             num_trains,
             ai_flag,
+            reward
         )
