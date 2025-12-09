@@ -35,7 +35,13 @@ class Player(object):
         self.numTrains      = numTrains
         self.points         = 0
         self.playerPosition = playerPosition
-        
+
+
+        self.pendingTickets = []
+        # a previousAction is only here for multi-action moves
+        # after ever move the action is cleared, so if a player picks a wild, turn end and is cleared
+        self.previousAction = {}
+
         #custom board to represent
         self.playerBoard    = playerBoard
         self.ai             = ai
@@ -110,6 +116,11 @@ class Player(object):
     def isAi(self):
         return self.ai
         
+
+    def endTurn(self):
+        self.previousAction = {}
+        self.pendingTickets = []
+        return
 
     # Get colors
     def getCombinations(self, weight, color):
