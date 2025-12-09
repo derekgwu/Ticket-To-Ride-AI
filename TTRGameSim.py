@@ -893,7 +893,7 @@ def playTTR():
         numPlayers = 2
     
     aiCount = input("How many players are AI?")
-    while int(aiCount) not in range(0,int(numPlayers))  and count < 5:
+    while int(aiCount) not in range(0,int(numPlayers) + 1)  and count < 5:
         if aiCount == 'exit': return "Thanks for playing!"
         numPlayers = input(f"Please enter a number between 0 and {numPlayers}: ")
         count += 1
