@@ -2,6 +2,8 @@
 
 1. Install `requirements.txt`
 2. Run `python TTRGameSim.py`
+3. To play against the AI, type `2` players and select `1` AI when prompted
+4. You can also make `2` AI play against each other by selecting `2` AI when prompted
 
 
 # Blog:
