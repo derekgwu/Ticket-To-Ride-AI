@@ -83,6 +83,10 @@ class AI:
         best_action = best_child.move
 
         print(f"the best action is {best_action}")
+        if(best_action["move"] == "tickets"):
+            print(f"Current Destination Tickets f{player.tickets}" )
+        elif(best_action["move"] == "cards"):
+            print(f"Current Destination Tickets f{player.hand}")
         print(f"current score {best_child.value}")
         return best_action
 
@@ -265,7 +269,7 @@ class AI:
         # Update state
         state['draw_pile'] = face_up
         state['face_down'] = face_down
-        
+
 
     def apply_draw_tickets_turn(self, state):
         player = state["player"]

@@ -1055,10 +1055,7 @@ def playTTR():
 
     #main game loop
     while True:
-        if player.isAi() == False:
-            print("\n_________________NEW PLAYER'S TURN_________________ \n")
-        else:
-            print("\n_________________AI'S TURN_________________ \n")
+        print(f"\n________________{player.name}'S TURN_________________ \n")
 
         game.playTurn(player)
         
