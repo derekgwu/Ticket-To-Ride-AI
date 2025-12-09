@@ -82,8 +82,6 @@ class Game(object):
     def getLegalActions(self, player):
         moves = []
 
-        if self.checkEndingCondition(player):
-            return
         
         # A train move is appended as 
         # moves.append({
@@ -461,13 +459,17 @@ class Game(object):
         player: player object
         """
         if player.isAi():
-            self.aiModel.monteCarlo(player, 10)
-        print ("------------------------------")
-        print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getPossibleTransitions(player))
-        print ("------------------------------")
-        print(self.getReward(player))
-        
+            action = self.aiModel.monteCarlo(player, 10)
+            if action is not None:
+                self.aiModel.apply_action(player, action)
+            else:
+                print("AI found no legal action.")
+            return "Move complete"
+        #print ("------------------------------")
+        #print("DEBUG: PRINTING LEGAL TRAIN ACTIONS")
+        #print(len(self.getLegalActions(player)))
+        #print ("------------------------------")
+        #print(self.getReward(player))
         if player.isAi() == False:
             choice = input("Please type: cards, trains or tickets: ")
         else:
