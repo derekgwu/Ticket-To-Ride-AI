@@ -456,6 +456,13 @@ class Board(object):
         """
         return nx.has_path(self.G, city1, city2)
     
+    def getShortestPath(self, city1, city2):
+        path = nx.shortest_path(self.G, city1, city2)
+
+        edge_path = [(path[i], path[i+1], self.getEdgeWeight(path[i], path[i+1])) for i in range(len(path)-1)]
+
+        return edge_path
+    
     def iterEdges(self):
         """returns an interator over all edges and edge data"""
         return self.G.edges(data = True)

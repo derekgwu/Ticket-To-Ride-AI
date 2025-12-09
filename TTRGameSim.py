@@ -59,7 +59,8 @@ class Game(object):
                                                 position, 
                                                 self.startingNumOfTrains,
                                                 False
-                                                )                          
+                                                )      
+                                
             self.players.append(player)
 
         for position in range(numAi):
@@ -82,6 +83,7 @@ class Game(object):
         self.ticket_paths = {}
         self.ticket_colors = {}
 
+
         for ticket in self.deck.tickets:
             city1, city2, value = ticket
             try:
@@ -90,9 +92,9 @@ class Game(object):
                 self.ticket_paths[ticket] = []
                 self.ticket_colors[ticket] = {}
                 continue
+            self.ticket_paths[ticket] = path_nodes
             
             edges = list(zip(path_nodes, path_nodes[1:]))
-            self.ticket_paths[ticket] = edges
 
             color_needs = collections.Counter()
             for u, v in edges:
@@ -104,7 +106,6 @@ class Game(object):
                 if non_grey:
                     color_needs[non_grey[0]] += data.get("weight", 1)
             self.ticket_colors[ticket] = color_needs
-
 
     def getLegalActions(self, player):
         moves = []
@@ -394,34 +395,36 @@ class Game(object):
         }
 
     def getReward(self, player):
-        score = player.getPoints()
+        score = player.getPoints() 
 
         if player == self.viewLongestPath():
             score += self.pointsForLongestRoute
 
         # Ticket progress bonus
+
         total = 0.0
-        for ticket in player.tickets:
-            path_edges = self.ticket_paths.get(ticket)
-            if not path_edges:
-                continue
+        for ticket in player.tickets.keys():
+            # for all unclaimed tickets
+            if player.tickets[ticket] == False:
+                path_edges = self.ticket_paths.get(ticket) # get the shortest path between the two citiyes
+                
+                #error case
+                if not path_edges:
+                    continue
+                claimed = 0
 
-            claimed = 0
-            unclaimed = 0   
-
-            for (c1, c2) in path_edges:
-                if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
-                    claimed += 1
+                total_path = 0.0
+                for (c1, c2, value) in path_edges:
+                    if player.playerBoard.hasEdge(c1, c2) or player.playerBoard.hasEdge(c2, c1):
+                        claimed += 1
+                if not self.endGame:
+                    frac = claimed / total_path
+                    total += ticket[2] * frac
                 else:
-                    unclaimed += 1
-            if not self.endGame:
-                frac = claimed / len(path_edges)
-                total += ticket[2] * frac
-            elif self.unclaimed > 0:
-                total -= ticket[2]
-        
+                    total -= ticket[2]
 
-        score += total
+        score += total  
+
 
         return score
     
@@ -479,7 +482,7 @@ class Game(object):
     def initialize(self):
         """Before game turns starts, enter names and pick destination tickets
         """
-    
+
         for player in self.players:
                 
             #pick desination tickets
@@ -674,10 +677,10 @@ class Game(object):
 
         choice1 = ''
 
-        print ("------------------------------")
-        print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getPossibleTransitions(player))
-        print ("------------------------------")
+        # print ("------------------------------")
+        # print("DEBUG: PRINTING LEGAL ACTIONS")
+        # print(self.getPossibleTransitions(player))
+        # print ("------------------------------")
 
         #if player is not AI
         if player.isAi() == False:
@@ -776,10 +779,10 @@ class Game(object):
         #sort alphabetically
 
 
-        print ("------------------------------")
-        print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getPossibleTransitions(player))
-        print ("------------------------------")
+        # print ("------------------------------")
+        # print("DEBUG: PRINTING LEGAL ACTIONS")
+        # print(self.getPossibleTransitions(player))
+        # print ("------------------------------")
         
         playable_routes = [x for x in self.board.iterEdges() if self.doesPlayerHaveCardsForEdge(player, x[0], x[1])]
         TTRPrint.formatTrainPrint([x for x in sorted(self.board.iterEdges()) 
@@ -970,10 +973,10 @@ class Game(object):
         tickets = self.deck.dealTickets(self.numTicketsDealt)
         player.pendingTickets = tickets
 
-        print ("------------------------------")
-        print("DEBUG: PRINTING LEGAL ACTIONS")
-        print(self.getPossibleTransitions(player))
-        print ("------------------------------")
+        # print ("------------------------------")
+        # print("DEBUG: PRINTING LEGAL ACTIONS")
+        # print(self.getPossibleTransitions(player))
+        # print ("------------------------------")
 
         #assign a number to each ticket to make it easier to choose
         tickets = {x[0]:x[1] for x in zip(range(len(tickets)), tickets)}
