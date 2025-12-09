@@ -41,7 +41,7 @@ class Game(object):
         self.endGame = False
         #card counting for observations
         #can do card couting on the face cards taken in other peoples hands
-        self.cardCounting = {}
+        # self.cardCounting = {p}
 
         #point values for tracks of different lengths
         self.routeValues           = {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
@@ -407,7 +407,6 @@ class Game(object):
             # for all unclaimed tickets
             if player.tickets[ticket] == False:
                 path_edges = self.ticket_paths.get(ticket) # get the shortest path between the two citiyes
-                
                 #error case
                 if not path_edges:
                     continue
@@ -418,7 +417,7 @@ class Game(object):
                         claimed += 1
                 if not self.endGame:
                     frac = claimed / len(path_edges)
-                    total += ticket[2] * frac
+                    total += ticket[2] * frac * 1/2
                 else:
                     total -= ticket[2]
 

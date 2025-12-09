@@ -84,9 +84,9 @@ class AI:
 
         print(f"the best action is {best_action}")
         if(best_action["move"] == "tickets"):
-            print(f"Current Destination Tickets f{player.tickets}" )
+            print(f"Current Destination Tickets:  {player.tickets}" )
         elif(best_action["move"] == "cards"):
-            print(f"Current Destination Tickets f{player.hand}")
+            print(f"Current Destination Tickets: {player.hand}")
         print(f"current score {best_child.value}")
         return best_action
 
