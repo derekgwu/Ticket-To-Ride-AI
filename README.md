@@ -156,5 +156,40 @@ $$o_i = \big( B,\ F_{\text{train}},\ H_k,\ T_k,\ R_k,\ P_k)$$
 
 ## Solution method
 
+### Overview
 
+Our solution method is a Monte Carlo Tree Search (MCTS) agent where each time it is the AI's turn, the agent:
+1. Builds a search tree based off the current observation
+2. Repeatedly simulates random futures from that root
+3. Estimates the expected final score of each potential action to determine the best expected move
+4. Selects the action that has the highest estimated value and executes it
 
+This attempts to build an approximate solution to a partially observable stochastic problem. We approximate each action in the current state by using rollout simulations to determine the best probability move.
+
+### Monte Carlo Tree Search Implementation
+#### Tree Node Structure
+
+Each node in the MCTS tree is represented by an MTNode object where each node stores:
+1. The state
+2. The action that led to it
+3. Pointers to parent and children
+4. Visit count
+5. Total simulation value
+
+#### Search Initialization
+
+At the beginning of each AI turn, the algorithm gathers the current state and creates the search root which then performs 1,000 simulations where each simulation descends the tree, potentially expanding a new node, performing a rollout, and backpropagating the results. When the simulations finish the AI selects the child from the root that has the highest cumulative value or the best predicted value score.
+
+#### Selection & Expansion
+
+We explore a number of nodes and once the simulation reaches the depth limit it cuts off and stops the simulation down that path. If the number of children for the current node is smaller than the number of legal actions for that player, this node still has unexplored actions and the algorithm retrieves all legal actions, randomly selects one unexplored action, applies this action to create a new state, creates a new child node connected to the current node and performs a rollout from that new node to estimate the actions value. If all actions have already been expanded, the algorithm selects one of the existing children at random and continues the simulation downward.
+
+#### Rollout
+
+Each rollout simulates a random continuation of the game until the defined depth limit is reached. Each simulation has players take turns in sequence where the active player’s legal moves are retrieved, one legal action is sampled at random and applied to generate the next state. Finally, it returns a expected value of the resulting state that is computed by the reward function to demonstrate the success of that move.
+
+#### Reward Function
+
+#### Backpropagation
+
+After each simulation the visit count of each node along the path is incremented and the node’s value is increased by the reward returned from the simulation. As you run more simulations and accumulate increased visits and expected values we average the value per total number of visits to get the estimated reward cost to pass up the tree. The AI obviously chooses the path with the best average value and takes that move to continue the game.
